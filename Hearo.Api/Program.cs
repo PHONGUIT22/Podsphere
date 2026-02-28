@@ -1,64 +1,105 @@
 using Microsoft.EntityFrameworkCore;
-using Hearo.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Authentication.JwtBearer; // Mở ra khi làm Login
-using Microsoft.Extensions.DependencyInjection;
-using Hearo.Application.Common.Interfaces.Authentication;
-using Hearo.Application.Common.Interfaces.Persistence; // Để nó hiểu IApplicationDbContext
-using Hearo.Application.Services.Authentication;       // Để thấy AuthService (sau khi đã dời folder)
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Hearo.Infrastructure.Authentication;
-
+using Microsoft.OpenApi.Models;
 using System.Text;
+
+using Hearo.Infrastructure.Persistence;
+using Hearo.Infrastructure.Authentication;
+using Hearo.Application.Common.Interfaces.Authentication;
+using Hearo.Application.Common.Interfaces.Persistence;
 using Hearo.Application.Common.Interfaces.Services;
+using Hearo.Application.Common.Mappings;
+using Hearo.Application.Services.Authentication;
 using Hearo.Application.Services.Podcasts;
+using Hearo.Application.Services.Blogs;
+using Hearo.Application.Services.Courses;
+using Hearo.Application.Services.Lessons;
+using Hearo.Application.Services.Meditations;
+using Hearo.Application.Services.Notifications;
+using Hearo.Application.Services.Payments;
+using Hearo.Application.Services.Reviews;
+using Hearo.Application.Services.Users;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Đăng ký DbContext (Đã chuẩn bài)
+// 1. CẤU HÌNH DATABASE & INFRASTRUCTURE
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<HearoDbContext>(options =>
-    options.UseSqlServer(connectionString, 
+    options.UseSqlServer(connectionString,
         b => b.MigrationsAssembly("Hearo.Infrastructure")));
 
-// 2. Đăng ký Controller và Swagger
+builder.Services.AddScoped<IApplicationDbContext>(provider =>
+    provider.GetRequiredService<HearoDbContext>());
+
+
+// 2. CẤU HÌNH SWAGGER & CONTROLLERS
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Type = SecuritySchemeType.Http,
         Scheme = "Bearer",
         BearerFormat = "JWT",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Mày dán cái Token JWT vào đây thôi (không cần chữ Bearer phía trước đâu)."
+        In = ParameterLocation.Header,
+        Description = "Dán Token JWT vào đây (không cần thêm chữ Bearer phía trước)."
     });
 
-    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            new OpenApiSecurityScheme
             {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
-                {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
             },
             Array.Empty<string>()
         }
     });
 });
-builder.Services.AddScoped<IAuthService, AuthService>()
-;
-builder.Services.AddScoped<IHealthService, HealthService>();
-builder.Services.AddScoped<IPodcastService, PodcastService>();
-builder.Services.AddScoped<IApplicationDbContext>(provider => 
-    provider.GetRequiredService<HearoDbContext>());
+
+// Bổ sung CORS (Rất quan trọng khi gọi API từ Frontend)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+});
+
+// 3. ĐĂNG KÝ SERVICES (DEPENDENCY INJECTION)
+
+// Đăng ký AutoMapper quét tầng Application
+builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
+
+// JWT Generator
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
-// 3. Đăng ký Authentication/Authorization (Mày chuẩn bị làm ở đây)
-// builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)...
-// Cấu hình Authentication với JWT
+
+// Nhóm Xác thực & Người dùng
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
+
+// Nhóm Sức khỏe & Tinh thần
+builder.Services.AddScoped<IHealthService, HealthService>(); // Nếu có IHealthService
+builder.Services.AddScoped<IMeditationService, MeditationService>();
+
+// Nhóm Nội dung (Podcast & Blog)
+builder.Services.AddScoped<IPodcastService, PodcastService>();
+builder.Services.AddScoped<IBlogService, BlogService>();
+
+// Nhóm Khóa học & Bài học
+builder.Services.AddScoped<ICourseService, CourseService>();
+builder.Services.AddScoped<ILessonService, LessonService>();
+builder.Services.AddScoped<IUserCourseService, UserCourseService>();
+
+// Nhóm Tương tác & Hệ thống
+builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// Nhóm Tài chính
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+
+// 4. CẤU HÌNH AUTHENTICATION (JWT)
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -78,23 +119,27 @@ builder.Services.AddAuthentication(options =>
             Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]!))
     };
 });
+
+// 5. BUILD APP & CONFIGURE PIPELINE
 var app = builder.Build();
-// --- Thêm đoạn này vào ---
+
+// Seed Data
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<HearoDbContext>();
-        DbInitializer.Seed(context);
+        DbInitializer.Seed(context); // Hãy chắc chắn bạn đã implement hàm này an toàn
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Có biến khi đang Seed Data mày ơi!");
+        logger.LogError(ex, "Có lỗi xảy ra trong quá trình Seed Data Database!");
     }
 }
-// Configure the HTTP request pipeline.
+
+// Cấu hình HTTP request pipeline 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -102,15 +147,14 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseAuthentication();
-// QUAN TRỌNG: Mày phải có dòng này để chạy được các Controller API
-app.UseAuthorization(); // Phải nằm sau app.UseHttpsRedirection()
-app.UseMiddleware<PremiumMiddleware>();
-app.MapControllers();   // <--- THÊM DÒNG NÀY VÀO
+app.UseCors("AllowAll"); 
 
-// Tạm thời giữ lại cái WeatherForecast để test nếu mày muốn
-app.MapGet("/weatherforecast", () => { /* ... code cũ ... */ })
-   .WithName("GetWeatherForecast")
-   .WithOpenApi();
+app.UseAuthentication(); 
+app.UseAuthorization();  
+
+// Middleware kiểm tra quyền Premium (Chỉ chạy sau khi đã biết user là ai - tức là sau Authorization)
+app.UseMiddleware<PremiumMiddleware>(); 
+
+app.MapControllers(); // Gọi các Controllers
 
 app.Run();

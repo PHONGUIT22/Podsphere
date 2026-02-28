@@ -1,13 +1,19 @@
 using Hearo.Application.Common.Interfaces.Persistence; // Để dùng IApplicationDbContext
 using Hearo.Application.Common.Models.Health; // Để dùng HealthRecommendationDto
+using Hearo.Application.Common.Models.Journals;
 using Hearo.Domain.Entities; // Để dùng UserHealthStats
 using Microsoft.EntityFrameworkCore; // Để dùng được các hàm Async như FirstOrDefaultAsync
 using System;
+using AutoMapper;
 public class HealthService : IHealthService
 {
     private readonly IApplicationDbContext _context;
-
-    public HealthService(IApplicationDbContext context) => _context = context;
+    private readonly IMapper _mapper;
+    public HealthService(IApplicationDbContext context, IMapper mapper) 
+    {
+        _context = context;
+        _mapper = mapper; // 3. Gán giá trị vào biến private
+    }
 
     public async Task<HealthRecommendationDto> GetHealthAnalysis(Guid userId)
 {
@@ -45,5 +51,33 @@ public class HealthService : IHealthService
         tags,
         advice
     );
+}
+// Thêm các hàm này vào Class HealthService của mày
+public async Task<bool> UpdateHealthStats(Guid userId, int moodScore, string stressLevel, double sleepHours, string? note)
+{
+    var stats = await _context.UserHealthStats.FirstOrDefaultAsync(s => s.UserId == userId);
+    if (stats == null) return false;
+
+    stats.MoodScore = moodScore;
+    stats.StressLevel = stressLevel;
+    stats.SleepHours = sleepHours;
+    stats.Note = note;
+    stats.UpdatedAt = DateTime.UtcNow;
+
+    return await _context.SaveChangesAsync() > 0;
+}
+
+public async Task<List<UserJournalDto>> GetUserJournals(Guid userId)
+{
+    var journals = await _context.UserJournals.Where(j => j.UserId == userId)
+        .OrderByDescending(j => j.CreatedAt).ToListAsync();
+    return _mapper.Map<List<UserJournalDto>>(journals);
+}
+
+public async Task<bool> AddJournal(Guid userId, string title, string content, string? mood)
+{
+    var journal = new UserJournal { UserId = userId, Title = title, Content = content, Mood = mood };
+    _context.UserJournals.Add(journal);
+    return await _context.SaveChangesAsync() > 0;
 }
 }

@@ -4,6 +4,7 @@ using Hearo.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Hearo.Infrastructure.Migrations
 {
     [DbContext(typeof(HearoDbContext))]
-    partial class HearoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260228110211_FixUserHealthStatsUpdatedAt")]
+    partial class FixUserHealthStatsUpdatedAt
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

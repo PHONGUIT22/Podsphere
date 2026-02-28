@@ -10,6 +10,4 @@ public class UserHealthStats : BaseEntity
     public string StressLevel { get; set; } = "Low"; // Low, Medium, High
     public double SleepHours { get; set; } // Số giờ ngủ trung bình
     public string? Note { get; set; } // Ghi chú cảm xúc của mày
-    
-    public DateTime UpdatedAt { get; set; }
 }
