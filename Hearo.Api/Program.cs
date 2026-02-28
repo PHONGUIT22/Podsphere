@@ -9,6 +9,8 @@ using Microsoft.IdentityModel.Tokens;
 using Hearo.Infrastructure.Authentication;
 
 using System.Text;
+using Hearo.Application.Common.Interfaces.Services;
+using Hearo.Application.Services.Podcasts;
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Đăng ký DbContext (Đã chuẩn bài)
@@ -50,7 +52,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddScoped<IAuthService, AuthService>()
 ;
 builder.Services.AddScoped<IHealthService, HealthService>();
-
+builder.Services.AddScoped<IPodcastService, PodcastService>();
 builder.Services.AddScoped<IApplicationDbContext>(provider => 
     provider.GetRequiredService<HearoDbContext>());
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();

@@ -28,32 +28,34 @@ public static class DbInitializer
         };
         context.Users.Add(admin);
   
-        // 4. Tạo chỉ số sức khỏe mẫu (Dựa trên thông số của mày)
+            // 4. Tạo chỉ số sức khỏe tinh thần mẫu (Thay cho đống Weight/Height cũ)
         var healthStats = new UserHealthStats
         {
             UserId = admin.Id,
-            Weight = 86.0, // Cân nặng 86kg
-            Height = 1.68, // Chiều cao 1.68m
-            WaistCircumference = 105.0 // Vòng bụng 105cm
+            MoodScore = 8, // Tinh thần đang rất "hào sảng"
+            StressLevel = "Low",
+            SleepHours = 8.0,
+            UpdatedAt = DateTime.Now
         };
         context.UserHealthStats.Add(healthStats);
 
-        // 5. Tạo Podcast mẫu
+        // 5. Cập nhật Podcast mẫu cho khớp chủ đề "Chữa lành"
         context.Podcasts.Add(new Podcast
         {
-            Title = "Hành trình vượt qua Gan NASH độ 2", // Tình trạng gan của mày
-            Description = "Podcast chia sẻ kinh nghiệm sống lành mạnh cho sinh viên UIT.",
+            Title = "Làm sao để code không Stress tại UIT?", 
+            Description = "Podcast chia sẻ cách cân bằng giữa việc học và sức khỏe tinh thần.",
+            Tags = "Stress,ChuaLanh",
             CategoryId = category.Id,
             IsPremium = false
         });
 
-        // 6. Tạo Blog mẫu
+        // 6. Cập nhật Blog mẫu
         context.Blogs.Add(new Blog
         {
-            Title = "Cách giảm vòng bụng từ 105cm xuống chuẩn",
-            Content = "Bài viết hướng dẫn các bài tập cho người có SMM 31.3 kg.",
+            Title = "Nhật ký của một Senior Dev về sức khỏe tinh thần",
+            Content = "Đừng để deadline làm mờ mắt, hãy chăm sóc tâm hồn mình trước.",
             AuthorId = admin.Id,
-            Slug = "giam-vong-bung-hieu-qua"
+            Slug = "cham-soc-suc-khoe-tinh-than"
         });
 
         context.SaveChanges();

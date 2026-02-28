@@ -48,12 +48,14 @@ public class AuthService : IAuthService
     };
 
     // 4. Lưu luôn thông số sức khỏe (86kg, 1m68)
+    // Trong hàm Register, đoạn tạo healthStats:
     var healthStats = new UserHealthStats
     {
         Id = Guid.NewGuid(),
         UserId = user.Id,
-        Weight = request.Weight,
-        Height = request.Height,
+        MoodScore = 5, // Mặc định trung bình
+        StressLevel = "Medium",
+        SleepHours = 7,
         UpdatedAt = DateTime.Now
     };
 

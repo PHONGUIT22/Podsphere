@@ -10,43 +10,40 @@ public class HealthService : IHealthService
     public HealthService(IApplicationDbContext context) => _context = context;
 
     public async Task<HealthRecommendationDto> GetHealthAnalysis(Guid userId)
+{
+    var stats = await _context.UserHealthStats
+        .OrderByDescending(x => x.UpdatedAt)
+        .FirstOrDefaultAsync(x => x.UserId == userId);
+
+    if (stats == null) throw new Exception("Chưa có dữ liệu tinh thần mày ơi!");
+
+    string status = stats.MoodScore <= 4 ? "Tâm trạng đang xuống dốc" : "Tinh thần ổn định";
+    string stressWarning = stats.StressLevel == "High" ? "Cảnh báo: Stress quá cao, dễ gãy đổ sự nghiệp!" : "Mọi thứ vẫn trong tầm kiểm soát";
+    
+    var tags = new List<string>();
+    string advice = "Tiếp tục duy trì năng lượng tích cực!";
+
+    // Logic gợi ý cho "Senior" tương lai
+    if (stats.MoodScore <= 4)
     {
-        // 1. Lấy chỉ số mới nhất của mày
-        var stats = await _context.UserHealthStats
-            .OrderByDescending(x => x.UpdatedAt)
-            .FirstOrDefaultAsync(x => x.UserId == userId);
-
-        if (stats == null) throw new Exception("Chưa có dữ liệu sức khỏe mày ơi!");
-
-        // 2. Tính BMI dựa trên 86kg và 1m68 của mày
-        double bmi = stats.Weight / Math.Pow(stats.Height, 2);
-        string bmiStatus = bmi >= 30 ? "Béo phì độ 1" : "Cần cố gắng";
-
-        var tags = new List<string>();
-        string liverWarning = "Bình thường";
-        string advice = "Tiếp tục phát huy!";
-
-        // 3. Logic "Chữa lành" cho cái bụng 105cm và gan NASH độ 2
-        if (stats.WaistSize > 100) // Vòng bụng mày 105cm
-        {
-            tags.Add("GiamMoNoiTang");
-            tags.Add("CardioTaiNha");
-            advice = "Bụng to quá rồi, đứng dậy Squat ngay!";
-        }
-
-        if (stats.LiverStatus == "NASH Grade 2") // Tình trạng gan của mày
-        {
-            tags.Add("GanNhiemMo");
-            tags.Add("EatClean");
-            liverWarning = "Cảnh báo: Gan NASH độ 2 cần kiêng tuyệt đối dầu mỡ!";
-        }
-
-        return new HealthRecommendationDto(
-            Math.Round(bmi, 2),
-            bmiStatus,
-            liverWarning,
-            tags,
-            advice
-        );
+        tags.Add("ChuaLanh");
+        tags.Add("DongLuc");
+        advice = "Mày đang buồn à? Nghe thử mấy bài Podcast về tư duy tích cực xem.";
     }
+
+    if (stats.StressLevel == "High")
+    {
+        tags.Add("ThienDinh");
+        tags.Add("GiamStress");
+        advice = "Học UIT áp lực quá thì nghỉ tay tí, nghe thiền cho tĩnh tâm mày ơi.";
+    }
+
+    return new HealthRecommendationDto(
+        stats.MoodScore,
+        status,
+        stressWarning,
+        tags,
+        advice
+    );
+}
 }
