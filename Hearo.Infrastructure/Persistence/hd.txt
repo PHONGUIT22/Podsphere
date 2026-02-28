@@ -1,0 +1,75 @@
+1. Bảo mật & Phân quyền (Authentication & Authorization)
+Vì PodSphere chạy theo mô hình Freemium, đây là ưu tiên số 1.
+
+Triển khai JWT (JSON Web Token): Mày đã cài package rồi, giờ là lúc viết logic để cấp Token.
+
+Phân quyền Role-based: Chia rõ quyền giữa Admin (là mày), Creator, và User thường.
+
+Logic Premium: Xây dựng các Middleware để kiểm tra xem User đã mua gói Monthly/Yearly chưa mới cho phép truy cập các Episodes độc quyền.
+
+🧠 2. Tầng Application (Services & Interfaces)
+Senior Dev sẽ không bao giờ để logic xử lý nằm ở Controller. Họ sẽ xây dựng "bộ não" ở tầng Hearo.Application:
+
+Interfaces: Định nghĩa các bản hợp đồng (Contract) như IHealthService, IPodcastService.
+
+Business Logic: Viết code xử lý nghiệp vụ, ví dụ: "Nếu vòng bụng > 100cm (như cái bụng 105cm hiện tại của mày) và gan bị NASH độ 2, thì hệ thống tự động gợi ý các tập Podcast về chế độ ăn kiêng".
+
+🧹 3. DTOs & Mapping (Lọc dữ liệu)
+Đừng bao giờ trả nguyên con Entity từ Database ra ngoài API.
+
+DTO (Data Transfer Object): Tạo các lớp chỉ chứa dữ liệu cần thiết (ví dụ: giấu PasswordHash, chỉ trả về Username và Email).
+
+AutoMapper/Mapster: Cài thêm thư viện để tự động chuyển đổi từ Entity sang DTO cho nhanh, không cần gán tay từng thuộc tính.
+
+🛠️ 4. Xử lý lỗi tập trung (Global Exception Handling)
+Thay vì dùng try-catch ở mọi nơi, Senior sẽ viết một cái Middleware để tóm toàn bộ lỗi của App.
+
+Nếu App bị lỗi, nó sẽ trả về một JSON chuẩn (ví dụ: { "error": "Mày chưa đăng nhập!", "code": 401 }) thay vì quăng cả một đống log lỗi của .NET ra màn hình làm người dùng hoảng sợ.
+
+🧪 5. Validation (Kiểm tra đầu vào)
+Mày cần đảm bảo dữ liệu người dùng nhập vào là chuẩn.
+
+Sử dụng FluentValidation để check: Email phải đúng định dạng, cân nặng không được âm, hoặc chiều cao phải hợp lý (như mức 1m68 của mày).
+
+
+--------------------------------------------------------------
+🎙️ Giai đoạn 1: Triển khai Nghiệp vụ chính (Core Features)
+Bây giờ mày phải tập trung vào "nội dung" – lý do tại sao người dùng lại tải App của mày [cite: 2025-12-09].
+
+CRUD Podcasts & Episodes: Xây dựng các API để Creator có thể đăng tải Podcast, quản lý các tập (Episodes).
+
+Hệ thống Comment & Review: Cho phép User thảo luận về các tập Podcast "chữa lành".
+
+Chức năng Bookmark/Favorite: Để người dùng lưu lại những bài thiền hoặc Podcast sức khỏe tâm đắc.
+
+☁️ Giai đoạn 2: Tích hợp Bên thứ ba (Third-party Integration)
+Đây là lúc mày nâng cấp dự án từ "bài tập về nhà" lên "dự án thực tế" [cite: 2026-02-15].
+
+File Storage (AWS S3 / Azure Blob): Đừng bao giờ lưu file âm thanh trực tiếp trong Database [cite: 2026-02-15]. Hãy dùng các dịch vụ lưu trữ đám mây để chứa các file MP3 của Podcast [cite: 2026-02-15].
+
+Cổng thanh toán (Momo / ZaloPay / Stripe): Để vận hành mô hình Freemium, mày cần API để User thanh toán gói Monthly/Yearly [cite: 2026-02-15]. Khi thanh toán thành công, hệ thống tự động cập nhật bảng Subscriptions mà mày đã chuẩn bị logic check hạn dùng.
+
+📱 Giai đoạn 3: Phát triển Giao diện (Frontend)
+Code Backend của mày xịn đến mấy mà không có cái "mặt tiền" đẹp thì cũng coi như bỏ [cite: 2026-02-15].
+
+Web Portal (React/Next.js): Dành cho Admin quản lý và người dùng nghe trên trình duyệt [cite: 2026-02-15].
+
+Mobile App (Flutter/React Native): Podcast thì người ta thường nghe khi đang di chuyển [cite: 2026-02-15]. Đặc biệt với người có sao Dịch Mã như mày, một cái App Mobile để nghe khi đang đi bộ giảm cân là cực kỳ hợp lý [cite: 2025-12-15].
+
+🏥 Giai đoạn 4: Nâng cấp "Trí tuệ" cho Health Tracker
+Vì PodSphere nhấn mạnh vào sức khỏe, hãy tận dụng tối đa dữ liệu của chính mày [cite: 2025-12-09].
+
+Báo cáo sức khỏe hàng tuần: Vẽ biểu đồ biến động cân nặng từ mức 86kg của mày [cite: 2026-02-03].
+
+Thông báo nhắc nhở (Push Notification): "Mày đã ngồi code 2 tiếng rồi, đứng dậy làm 10 cái hít đất cho cái gan NASH độ 2 nó thở đi!" [cite: 2025-12-19].
+
+BMI Calculator nâng cao: Tính toán tự động và đưa ra lời khuyên dựa trên các chỉ số như vòng bụng 105cm hay chu vi cổ 43cm [cite: 2025-12-19].
+
+🚀 Giai đoạn 5: Triển khai & Vận hành (DevOps)
+Đưa sản phẩm lên "sóng" để hội đồng chấm thi có thể truy cập [cite: 2026-02-12].
+
+Dockerize: Đóng gói toàn bộ các tầng dự án vào Docker Container để chạy ở đâu cũng mượt [cite: 2026-02-15].
+
+CI/CD (GitHub Actions): Mỗi khi mày push code mới lên GitHub, hệ thống tự động Build và Deploy lên Server (như Azure hoặc AWS) [cite: 2026-02-15].
+Promt
+"Đây là cấu trúc dự án .NET 8 theo Clean Architecture của tao. Dự án tên là PodSphere, dùng để quản lý Podcast và sức khỏe (vòng bụng 105cm, gan NASH độ 2). Mày hãy dựa vào cấu trúc này để [nhập yêu cầu của mày vào đây]."

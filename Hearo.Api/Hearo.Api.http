@@ -1,0 +1,6 @@
+@Hearo.Api_HostAddress = http://localhost:5015
+
+GET {{Hearo.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
