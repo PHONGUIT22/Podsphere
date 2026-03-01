@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Hearo.Domain.Entities;
 
 // THÊM 3 DÒNG NÀY VÀO:
-using Hearo.Application.Common.Models.Podcasts;
 using Hearo.Application.Common.Models.Episodes;
 using Hearo.Application.Common.Models.Categories;
 using Hearo.Application.Common.Models.Comments;

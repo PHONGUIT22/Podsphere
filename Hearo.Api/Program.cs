@@ -20,7 +20,8 @@ using Hearo.Application.Services.Notifications;
 using Hearo.Application.Services.Payments;
 using Hearo.Application.Services.Reviews;
 using Hearo.Application.Services.Users;
-
+using FluentValidation;
+using FluentValidation.AspNetCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. CẤU HÌNH DATABASE & INFRASTRUCTURE
@@ -68,7 +69,8 @@ builder.Services.AddCors(options =>
 });
 
 // 3. ĐĂNG KÝ SERVICES (DEPENDENCY INJECTION)
-
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
 // Đăng ký AutoMapper quét tầng Application
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
@@ -153,6 +155,7 @@ app.UseAuthentication();
 app.UseAuthorization();  
 
 // Middleware kiểm tra quyền Premium (Chỉ chạy sau khi đã biết user là ai - tức là sau Authorization)
+app.UseMiddleware<GlobalExceptionMiddleware>(); // Thêm dòng này lên đầu Pipeline
 app.UseMiddleware<PremiumMiddleware>(); 
 
 app.MapControllers(); // Gọi các Controllers
