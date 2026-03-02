@@ -25,7 +25,8 @@ public class HearoDbContext : DbContext, IApplicationDbContext
     public DbSet<Comment> Comments { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<Payment> Payments { get; set; }
-
+    public DbSet<UserFavoritePodcast> UserFavoritePodcasts { get; set; }
+    public DbSet<UserFavoriteMeditation> UserFavoriteMeditations { get; set; }
    protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
     base.OnModelCreating(modelBuilder);
@@ -72,5 +73,12 @@ public class HearoDbContext : DbContext, IApplicationDbContext
     modelBuilder.Entity<Payment>(entity => {
         entity.Property(e => e.Amount).HasColumnType("decimal(18,2)");
     });
+    // Cấu hình Favorite Podcast
+    modelBuilder.Entity<UserFavoritePodcast>()
+        .HasKey(uf => new { uf.UserId, uf.PodcastId });
+
+    // Cấu hình Favorite Meditation
+    modelBuilder.Entity<UserFavoriteMeditation>()
+        .HasKey(uf => new { uf.UserId, uf.MeditationId });
 }
 }

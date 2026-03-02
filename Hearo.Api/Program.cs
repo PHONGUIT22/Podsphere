@@ -100,7 +100,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 
 // Nhóm Tài chính
 builder.Services.AddScoped<IPaymentService, PaymentService>();
-
+builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 // 4. CẤU HÌNH AUTHENTICATION (JWT)
 builder.Services.AddAuthentication(options =>
 {

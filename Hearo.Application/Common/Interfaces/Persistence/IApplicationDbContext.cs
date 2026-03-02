@@ -22,5 +22,7 @@ public interface IApplicationDbContext
     public DbSet<Comment> Comments { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<Payment> Payments { get; set; }
+    DbSet<UserFavoritePodcast> UserFavoritePodcasts { get; }
+    DbSet<UserFavoriteMeditation> UserFavoriteMeditations { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -5,6 +5,10 @@ using Hearo.Application.Common.Models.Comments;
 
 public interface IPodcastService
 {
+    Task<Guid> CreatePodcast(PodcastDto podcastDto);
+    Task<bool> UpdatePodcast(Guid id, PodcastDto podcastDto);
+    Task<bool> DeletePodcast(Guid id);
+    Task<List<CommentDto>> GetCommentsByEpisodeId(Guid episodeId);
     Task<PodcastDto?> GetPodcastDetail(Guid podcastId);
     Task<List<PodcastDto>> GetRecommendedPodcasts(Guid userId);
     Task<List<CategoryDto>> GetAllCategories();

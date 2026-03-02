@@ -68,4 +68,41 @@ public async Task<PodcastDto?> GetPodcastDetail(Guid podcastId)
         
     return _mapper.Map<PodcastDto>(podcast);
 }
+// Thêm các hàm này vào trong class PodcastService
+public async Task<Guid> CreatePodcast(PodcastDto podcastDto)
+{
+    var podcast = _mapper.Map<Podcast>(podcastDto);
+    _context.Podcasts.Add(podcast);
+    await _context.SaveChangesAsync(default);
+    return podcast.Id;
+}
+
+public async Task<bool> UpdatePodcast(Guid id, PodcastDto podcastDto)
+{
+    var podcast = await _context.Podcasts.FindAsync(id);
+    if (podcast == null) return false;
+
+    // Map dữ liệu mới đè lên cái cũ
+    _mapper.Map(podcastDto, podcast);
+    return await _context.SaveChangesAsync(default) > 0;
+}
+
+public async Task<bool> DeletePodcast(Guid id)
+{
+    var podcast = await _context.Podcasts.FindAsync(id);
+    if (podcast == null) return false;
+
+    _context.Podcasts.Remove(podcast);
+    return await _context.SaveChangesAsync(default) > 0;
+}
+
+public async Task<List<CommentDto>> GetCommentsByEpisodeId(Guid episodeId)
+{
+    var comments = await _context.Comments
+        .Include(c => c.User) // Để biết ai comment
+        .Where(c => c.EpisodeId == episodeId)
+        .OrderByDescending(c => c.CreatedAt)
+        .ToListAsync();
+    return _mapper.Map<List<CommentDto>>(comments);
+}
 }
