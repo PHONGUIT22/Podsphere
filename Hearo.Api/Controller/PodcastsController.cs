@@ -3,6 +3,7 @@ using Hearo.Application.Common.Interfaces.Services;
 using Hearo.Application.Common.Models.Podcasts;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using Hearo.Application.Common.Models.Comments;
 
 namespace Hearo.Api.Controller;
 
@@ -24,7 +25,17 @@ public class PodcastsController : ControllerBase
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         return Ok(await _podcastService.GetRecommendedPodcasts(userId));
     }
+    [Authorize] // Bắt buộc đăng nhập mới được cào phím
+    [HttpPost("{id}/comments")]
+    public async Task<IActionResult> AddComment(Guid episodeId, [FromBody] CreateCommentDto dto)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
+        var result = await _podcastService.AddComment(userId, episodeId, dto.Content, dto.Timestamp);
+
+        if (!result) return BadRequest("Lỗi rồi mày ơi, check lại cái PodcastId xem.");
+        return Ok("Đã đăng bình luận thành công!");
+    }
     [HttpGet("{id}")]
     public async Task<IActionResult> GetDetail(Guid id) => Ok(await _podcastService.GetPodcastDetail(id));
 
@@ -42,4 +53,10 @@ public class PodcastsController : ControllerBase
 
     [HttpGet("episodes/{episodeId}/comments")]
     public async Task<IActionResult> GetComments(Guid episodeId) => Ok(await _podcastService.GetCommentsByEpisodeId(episodeId));
+    [HttpGet("categories")]
+    public async Task<IActionResult> GetAllCategories()
+    {
+        var categories = await _podcastService.GetAllCategories();
+        return Ok(categories);
+    }
 }

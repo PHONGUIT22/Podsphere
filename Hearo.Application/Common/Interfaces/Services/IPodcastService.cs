@@ -13,5 +13,8 @@ public interface IPodcastService
     Task<List<PodcastDto>> GetRecommendedPodcasts(Guid userId);
     Task<List<CategoryDto>> GetAllCategories();
     Task<List<EpisodeDto>> GetEpisodesByPodcastId(Guid podcastId);
-    Task<bool> AddComment(Guid userId, Guid episodeId, string content, double timestamp);
+// Hearo.Application/Common/Interfaces/Services/IPodcastService.cs
+    // Hearo.Application/Common/Interfaces/Services/IPodcastService.cs
+
+Task<bool> AddComment(Guid userId, Guid episodeId, string content, double timestamp);
 }
