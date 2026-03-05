@@ -16,5 +16,7 @@ public interface IPodcastService
 // Hearo.Application/Common/Interfaces/Services/IPodcastService.cs
     // Hearo.Application/Common/Interfaces/Services/IPodcastService.cs
 
-Task<bool> AddComment(Guid userId, Guid episodeId, string content, double timestamp);
+    Task<bool> AddComment(Guid userId, Guid episodeId, string content, double timestamp);
+    Task<Guid> CreateEpisodeWithFile(Guid podcastId, EpisodeDto episodeDto, Stream fileStream, string contentType);
+
 }

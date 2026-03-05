@@ -4,6 +4,8 @@ using Hearo.Application.Common.Models.Podcasts;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Hearo.Application.Common.Models.Comments;
+using Hearo.Application.Common.Models.Episodes;
+using Hearo.Api.Models;
 
 namespace Hearo.Api.Controller;
 
@@ -58,5 +60,16 @@ public class PodcastsController : ControllerBase
     {
         var categories = await _podcastService.GetAllCategories();
         return Ok(categories);
+    }
+   [HttpPost("{id}/episodes")]
+    public async Task<IActionResult> CreateEpisode(Guid id, [FromForm] CreateEpisodeRequest request)
+    {
+        if (request.File == null) return BadRequest("File đâu mày?");
+        
+        var episodeDto = new EpisodeDto { Title = request.Title, Order = request.Order, IsExclusive = request.IsExclusive };
+        using var stream = request.File.OpenReadStream();
+        var resultId = await _podcastService.CreateEpisodeWithFile(id, episodeDto, stream, request.File.ContentType);
+        
+        return Ok(resultId);
     }
 }

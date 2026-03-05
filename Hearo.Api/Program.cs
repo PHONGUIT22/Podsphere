@@ -22,6 +22,8 @@ using Hearo.Application.Services.Reviews;
 using Hearo.Application.Services.Users;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Amazon.S3; // Thư viện AWS
+using Hearo.Infrastructure.FileStorage; // Để thấy Class triển khai S3
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. CẤU HÌNH DATABASE & INFRASTRUCTURE
@@ -32,8 +34,29 @@ builder.Services.AddDbContext<HearoDbContext>(options =>
 
 builder.Services.AddScoped<IApplicationDbContext>(provider =>
     provider.GetRequiredService<HearoDbContext>());
+//CAU HINH AWS S3
+builder.Services.AddScoped<IAmazonS3>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    
+    // 1. Lấy thông tin từ cái cụm "AWS" mày vừa sửa
+    var accessKey = config["AWS:AccessKey"];
+    var secretKey = config["AWS:SecretKey"];
+    var serviceUrl = config["AWS:ServiceURL"];
 
+    // 2. Ép nó dùng Credentials mày cung cấp thay vì đi tìm của Amazon mây
+    var credentials = new Amazon.Runtime.BasicAWSCredentials(accessKey, secretKey);
 
+    // 3. Cấu hình để nó gọi vào localhost:9000 của MinIO
+    var s3Config = new AmazonS3Config
+    {
+        ServiceURL = serviceUrl,
+        ForcePathStyle = true, // Bắt buộc phải có để chạy với MinIO
+        AuthenticationRegion = config["AWS:Region"]
+    };
+
+    return new AmazonS3Client(credentials, s3Config);
+});
 // 2. CẤU HÌNH SWAGGER & CONTROLLERS
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -101,6 +124,9 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 // Nhóm Tài chính
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+//Storage
+
+builder.Services.AddScoped<IFileStorageService, S3StorageService>();
 // 4. CẤU HÌNH AUTHENTICATION (JWT)
 builder.Services.AddAuthentication(options =>
 {
