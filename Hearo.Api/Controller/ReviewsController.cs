@@ -23,11 +23,10 @@ public class ReviewsController : ControllerBase
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        // Gọi đúng hàm AddReview mày đã viết trong IReviewService
         var result = await _reviewService.AddReview(userId, dto.Rating, dto.Comment, dto.TargetId, null);
 
         if (!result) return BadRequest("Review Podcast hụt rồi.");
-        return Ok("Cảm ơn mày đã đánh giá Podcast!");
+        return Ok("Cảm ơn đã đánh giá Podcast!");
     }
 
     [Authorize]

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Http;
 
-namespace Hearo.Api.Models; // Hoặc namespace đúng của mày
+namespace Hearo.Api.Models; 
 
 public class CreateEpisodeRequest
 {

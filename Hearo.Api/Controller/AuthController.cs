@@ -28,7 +28,7 @@ public class AuthController : ControllerBase
     [HttpGet("admin-only")]
     public IActionResult GetAdminSecret()
     {
-        return Ok("Chao Admin UIT! May da vao duoc vung cam.");
+        return Ok("Chao Admin xinh dep, day la thong tin bi mat chi co Admin moi duoc xem!");
         
     }
     [Authorize(Roles = "Admin")] // CHỈ ADMIN MỚI ĐƯỢC NÂNG CẤP ROLE

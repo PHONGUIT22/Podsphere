@@ -38,7 +38,7 @@ public class PremiumMiddleware
                 context.Response.StatusCode = 403; // Cam cua
                 context.Response.ContentType = "application/json";
                 await context.Response.WriteAsJsonAsync(new { 
-                    message = "May chua nap tien Monthly/Yearly nen khong nghe duoc dau!",
+                    message = "Ban chua nap tien Monthly/Yearly nen khong nghe duoc dau!",
                     weight_reminder = "Lo ma di tap the duc di, 86kg roi do!" // Nhắc nhở sức khỏe
                 });
                 return;

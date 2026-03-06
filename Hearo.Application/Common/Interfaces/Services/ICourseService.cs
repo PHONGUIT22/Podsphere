@@ -6,4 +6,5 @@ public interface ICourseService
 {
     Task<List<CourseDto>> GetAllCourses();
     Task<CourseDto> GetCourseDetail(Guid courseId);
+    
 }

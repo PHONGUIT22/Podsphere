@@ -5,4 +5,5 @@ namespace Hearo.Application.Common.Interfaces.Services;
 public interface IPaymentService
 {
     Task<List<PaymentDto>> GetUserPaymentHistory(Guid userId);
+    Task<string> CreateCheckoutSession(Guid userId);
 }

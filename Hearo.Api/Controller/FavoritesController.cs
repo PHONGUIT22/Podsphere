@@ -13,7 +13,7 @@ public class FavoritesController : ControllerBase
     [HttpPost("podcast/{id}")]
     public async Task<IActionResult> Toggle(Guid id)
     {
-        // Lấy UserId từ JWT Token mày đã làm ở AuthController
+        // Lấy UserId từ JWT Token đã được xác thực
         var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
         var result = await _favoriteService.TogglePodcastFavorite(userId, id);
         return Ok(new { message = result });

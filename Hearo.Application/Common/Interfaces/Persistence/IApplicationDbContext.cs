@@ -6,7 +6,6 @@ namespace Hearo.Application.Common.Interfaces.Persistence;
 public interface IApplicationDbContext
 {
     DbSet<User> Users { get; set; }
-    // Thêm các DbSet khác của mày vào đây...
     public DbSet<UserHealthStats> UserHealthStats { get; set; }
     public DbSet<Subscription> Subscriptions { get; set; }
     public DbSet<UserJournal> UserJournals { get; set; }

@@ -35,7 +35,7 @@ public class PodcastsController : ControllerBase
 
         var result = await _podcastService.AddComment(userId, episodeId, dto.Content, dto.Timestamp);
 
-        if (!result) return BadRequest("Lỗi rồi mày ơi, check lại cái PodcastId xem.");
+        if (!result) return BadRequest("Lỗi rồi , check lại cái PodcastId xem.");
         return Ok("Đã đăng bình luận thành công!");
     }
     [HttpGet("{id}")]
@@ -64,7 +64,7 @@ public class PodcastsController : ControllerBase
    [HttpPost("{id}/episodes")]
     public async Task<IActionResult> CreateEpisode(Guid id, [FromForm] CreateEpisodeRequest request)
     {
-        if (request.File == null) return BadRequest("File đâu mày?");
+        if (request.File == null) return BadRequest("Chưa up file lên kìa bạn ơi.");
         
         var episodeDto = new EpisodeDto { Title = request.Title, Order = request.Order, IsExclusive = request.IsExclusive };
         using var stream = request.File.OpenReadStream();

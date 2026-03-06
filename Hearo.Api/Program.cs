@@ -25,6 +25,7 @@ using FluentValidation.AspNetCore;
 using Amazon.S3; // Thư viện AWS
 using Hearo.Infrastructure.FileStorage; // Để thấy Class triển khai S3
 var builder = WebApplication.CreateBuilder(args);
+Stripe.StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
 // 1. CẤU HÌNH DATABASE & INFRASTRUCTURE
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
