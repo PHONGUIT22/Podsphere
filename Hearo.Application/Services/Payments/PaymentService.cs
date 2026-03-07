@@ -62,4 +62,15 @@ public async Task<string> CreateCheckoutSession(Guid userId)
 
     return session.Url; 
 }
+public async Task HandlePaymentSuccess(Guid userId)
+{
+    var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+    if (user != null)
+    {
+        user.IsPremium = true; // "Mở khóa" cuộc đời cho User
+        user.PremiumExpiryDate = DateTime.UtcNow.AddMonths(1); // Cho dùng 1 tháng
+        
+        await _context.SaveChangesAsync();
+    }
+}
 }

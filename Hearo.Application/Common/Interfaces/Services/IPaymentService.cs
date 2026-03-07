@@ -6,4 +6,5 @@ public interface IPaymentService
 {
     Task<List<PaymentDto>> GetUserPaymentHistory(Guid userId);
     Task<string> CreateCheckoutSession(Guid userId);
+    Task HandlePaymentSuccess(Guid userId);
 }

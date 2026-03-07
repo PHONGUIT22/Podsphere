@@ -11,4 +11,6 @@ public class User : BaseEntity
     public string? Avatar { get; set; }
     public string Role { get; set; } = "User"; // Admin, Creator, User
     public UserHealthStats? HealthStats { get; set; }
+    public bool IsPremium { get; set; } = false; 
+    public DateTime? PremiumExpiryDate { get; set; }
 }
