@@ -20,7 +20,14 @@ public class PodcastsController : ControllerBase
     {
         _podcastService = podcastService;
     }
-
+    [AllowAnonymous] // Cho phép xem danh sách mà không cần đăng nhập (để test cho dễ)
+    [HttpGet]
+    public async Task<IActionResult> GetAll() 
+    {
+        // Giả sử service của mày có hàm GetAllPodcasts
+        var result = await _podcastService.GetAllPodcasts(); 
+        return Ok(result);
+}
     [HttpGet("recommended")]
     public async Task<IActionResult> GetRecommended() 
     {

@@ -24,7 +24,17 @@ public class PodcastService : IPodcastService
         _healthService = healthService;
         _mapper = mapper;
     }
+    // Tìm class PodcastService và thêm hàm này vào
+    public async Task<IEnumerable<PodcastDto>> GetAllPodcasts()
+    {
+        // Lấy tất cả podcast từ Database, nhớ Include Category nếu muốn hiện tên thể loại
+        var podcasts = await _context.Podcasts
+            .Include(p => p.Category)
+            .ToListAsync();
 
+        // Dùng AutoMapper để chuyển từ Entity sang Dto cho Frontend xài
+        return _mapper.Map<IEnumerable<PodcastDto>>(podcasts);
+    }
     public async Task<List<PodcastDto>> GetRecommendedPodcasts(Guid userId)
     {
         var analysis = await _healthService.GetHealthAnalysis(userId);
@@ -34,7 +44,6 @@ public class PodcastService : IPodcastService
             .Where(p => suggestedTags.Any(tag => p.Tags != null && p.Tags.Contains(tag)))
             .ToListAsync();
 
-        // Senior chỉ dùng đúng 1 dòng này để trả về dữ liệu
         return _mapper.Map<List<PodcastDto>>(podcasts);
     }
     // Thêm vào trong class PodcastService

@@ -18,5 +18,6 @@ public interface IPodcastService
 
     Task<bool> AddComment(Guid userId, Guid episodeId, string content, double timestamp);
     Task<Guid> CreateEpisodeWithFile(Guid podcastId, EpisodeDto episodeDto, Stream fileStream, string contentType);
-
+    // Thêm dòng này vào IPodcastService.cs
+    Task<IEnumerable<PodcastDto>> GetAllPodcasts();
 }
