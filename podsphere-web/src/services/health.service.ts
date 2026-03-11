@@ -18,5 +18,10 @@ export const healthService = {
   getJournals: async () => {
     const { data } = await api.get<UserJournalDto[]>("/health/journals");
     return data;
+  },
+  // THÊM HÀM NÀY VÀO ĐỂ HẾT LỖI
+  addJournal: async (journalData: { title: string, content: string, mood: string | null }) => {
+    const { data } = await api.post<UserJournalDto>("/health/journals", journalData);
+    return data;
   }
 };
