@@ -18,4 +18,11 @@ public class FavoritesController : ControllerBase
         var result = await _favoriteService.TogglePodcastFavorite(userId, id);
         return Ok(new { message = result });
     }
+    [HttpGet("podcasts")]
+    public async Task<IActionResult> GetMyFavorites()
+    {
+        var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var result = await _favoriteService.GetMyFavoritePodcasts(userId);
+        return Ok(result);
+    }
 }
