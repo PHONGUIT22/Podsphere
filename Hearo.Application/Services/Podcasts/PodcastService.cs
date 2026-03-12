@@ -54,11 +54,37 @@ public class PodcastService : IPodcastService
         return _mapper.Map<List<CategoryDto>>(categories);
     }
 
-    public async Task<List<EpisodeDto>> GetEpisodesByPodcastId(Guid podcastId)
+    // Hearo.Application/Services/Podcasts/PodcastService.cs
+    public async Task<List<EpisodeDto>> GetEpisodesByPodcastId(Guid podcastId, Guid? userId)
     {
-        var episodes = await _context.Episodes.Where(e => e.PodcastId == podcastId).ToListAsync();
-        return _mapper.Map<List<EpisodeDto>>(episodes);
-    }
+        var episodes = await _context.Episodes
+            .Where(e => e.PodcastId == podcastId)
+            .OrderBy(e => e.Order)
+            .ToListAsync();
+
+        var episodeDtos = _mapper.Map<List<EpisodeDto>>(episodes);
+
+        // 1. Kiểm tra User có phải Premium không
+        bool isPremiumUser = false;
+        if (userId.HasValue)
+        {
+            isPremiumUser = await _context.Users.AnyAsync(u => 
+                u.Id == userId.Value && 
+                u.IsPremium && 
+                u.PremiumExpiryDate > DateTime.UtcNow);
+        }
+
+        // 2. Nếu ĐẾCH PHẢI Premium, xóa sạch AudioUrl của các tập Exclusive
+        if (!isPremiumUser)
+        {
+            // Tạo ra 1 list mới, nếu tập đó Exclusive thì tạo bản sao và đè AudioUrl thành ""
+            episodeDtos = episodeDtos.Select(ep => ep.IsExclusive 
+                ? ep with { AudioUrl = "" } // (Dùng dòng này NẾU EpisodeDto là "record")
+                : ep).ToList();
+        }
+
+                return episodeDtos;
+        }
 
     public async Task<bool> AddComment(Guid userId, Guid episodeId, string content, double timestamp)
     {
@@ -135,4 +161,9 @@ public class PodcastService : IPodcastService
             
             return episode.Id;
         }
+
+    public Task<List<EpisodeDto>> GetEpisodesByPodcastId(Guid podcastId)
+    {
+        throw new NotImplementedException();
     }
+}

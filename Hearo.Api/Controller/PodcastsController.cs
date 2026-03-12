@@ -57,9 +57,25 @@ public class PodcastsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id) => Ok(await _podcastService.DeletePodcast(id));
 
+    
     [HttpGet("{id}/episodes")]
-    public async Task<IActionResult> GetEpisodes(Guid id) => Ok(await _podcastService.GetEpisodesByPodcastId(id));
+    [AllowAnonymous] // QUAN TRỌNG: Cho phép ai cũng gọi được API này
+    public async Task<IActionResult> GetEpisodes(Guid id)
+    {
+        Guid? userId = null;
 
+        if (User.Identity != null && User.Identity.IsAuthenticated)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (Guid.TryParse(userIdClaim, out var parsedId))
+            {
+                userId = parsedId;
+            }
+        }
+
+        var result = await _podcastService.GetEpisodesByPodcastId(id, userId);
+        return Ok(result);
+    }
     [HttpGet("episodes/{episodeId}/comments")]
     public async Task<IActionResult> GetComments(Guid episodeId) => Ok(await _podcastService.GetCommentsByEpisodeId(episodeId));
     [HttpGet("categories")]

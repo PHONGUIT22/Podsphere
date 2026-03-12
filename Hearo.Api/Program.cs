@@ -23,7 +23,8 @@ using Hearo.Application.Services.Users;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Amazon.S3; // Thư viện AWS
-using Hearo.Infrastructure.FileStorage; // Để thấy Class triển khai S3
+using Hearo.Infrastructure.FileStorage;
+using Hearo.Api.Middlewares; // Để thấy Class triển khai S3
 var builder = WebApplication.CreateBuilder(args);
 Stripe.StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 

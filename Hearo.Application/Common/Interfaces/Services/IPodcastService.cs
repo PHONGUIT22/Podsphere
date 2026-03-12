@@ -20,4 +20,5 @@ public interface IPodcastService
     Task<Guid> CreateEpisodeWithFile(Guid podcastId, EpisodeDto episodeDto, Stream fileStream, string contentType);
     // Thêm dòng này vào IPodcastService.cs
     Task<IEnumerable<PodcastDto>> GetAllPodcasts();
+    Task<List<EpisodeDto>> GetEpisodesByPodcastId(Guid podcastId, Guid? userId);
 }

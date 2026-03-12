@@ -1,24 +1,33 @@
-import { EpisodeDto } from "@/types/podcast";
-import { PlayCircle, Lock } from "lucide-react";
+// src/components/ui/EpisodeItem.tsx
+import { Lock, PlayCircle } from "lucide-react";
 
-export const EpisodeItem = ({ episode, onPlay }: { episode: EpisodeDto, onPlay: (ep: EpisodeDto) => void }) => {
+export const EpisodeItem = ({ episode, onPlay }: { episode: any, onPlay: any }) => {
+  // Nếu là tập Exclusive mà không có link (do Service xóa) thì là BỊ KHÓA
+  const isLocked = episode.isExclusive && !episode.audioUrl;
+
   return (
-    <div className="group flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800">
+    <div className={`flex items-center justify-between p-3 rounded-lg ${isLocked ? 'opacity-60 bg-zinc-50' : 'hover:bg-zinc-100'}`}>
       <div className="flex items-center gap-4">
-        <span className="w-4 text-xs font-medium text-zinc-400">{episode.order}</span>
+        <span className="text-zinc-400">{episode.order}</span>
         <div>
-          <h4 className="text-sm font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
+          <h4 className="font-semibold flex items-center gap-2 text-sm">
             {episode.title}
             {episode.isExclusive && <Lock size={12} className="text-yellow-500" />}
           </h4>
-          <p className="text-xs text-zinc-500">{Math.floor(episode.duration / 60)} phút</p>
         </div>
       </div>
+      
       <button 
-        onClick={() => onPlay(episode)}
-        className="text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+        onClick={() => {
+          if (isLocked) {
+             alert("Tập này chỉ dành cho dân Premium thôi mậy! Gan NASH độ 2 rồi, lo nạp tiền mua gói sức khỏe đi!");
+          } else {
+             onPlay(episode);
+          }
+        }}
+        className={isLocked ? "text-zinc-300" : "text-indigo-600"}
       >
-        <PlayCircle size={24} />
+        {isLocked ? <Lock size={20} /> : <PlayCircle size={24} />}
       </button>
     </div>
   );
