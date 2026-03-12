@@ -1,7 +1,12 @@
 // BlogCard.tsx
 export const BlogCard = ({ blog }: { blog: import("@/types/social").BlogDto }) => (
   <div className="flex gap-4 rounded-xl border border-zinc-100 p-3 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900/50">
-    <img src={blog.thumbnail || ""} className="h-20 w-20 rounded-lg object-cover" alt="" />
+    <img 
+      // FIX: Đổi "" thành undefined hoặc link ảnh mặc định
+      src={blog.thumbnail || undefined} 
+      className="h-20 w-20 rounded-lg object-cover bg-zinc-100" 
+      alt={blog.title} 
+    />
     <div className="flex flex-col justify-center">
       <h4 className="line-clamp-1 font-semibold text-sm">{blog.title}</h4>
       <p className="mt-1 line-clamp-2 text-xs text-zinc-500">{blog.content}</p>

@@ -1,5 +1,6 @@
 // PodcastDto.cs
 export interface PodcastDto {
+    episodes: any;
     id: string;
     title: string;
     description: string;

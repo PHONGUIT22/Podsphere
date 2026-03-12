@@ -9,11 +9,12 @@ public class S3StorageService : IFileStorageService
 {
     private readonly IAmazonS3 _s3Client;
     private readonly string _bucketName;
-
+    private readonly string _serviceUrl;
     public S3StorageService(IAmazonS3 s3Client, IConfiguration configuration)
     {
         _s3Client = s3Client;
         _bucketName = configuration["AWS:BucketName"] ?? string.Empty;
+        _serviceUrl = configuration["AWS:ServiceUrl"] ?? string.Empty;
     }
 
     public async Task<string> UploadFileAsync(Stream fileStream, string fileName, string contentType)
@@ -31,7 +32,7 @@ public class S3StorageService : IFileStorageService
         await fileTransferUtility.UploadAsync(uploadRequest);
         
         // Trả về URL để lưu vào Database
-        return $"https://{_bucketName}.s3.amazonaws.com/{fileName}";
+        return $"{_serviceUrl}/{_bucketName}/{fileName}";
     }
 
     public async Task DeleteFileAsync(string fileUrl)

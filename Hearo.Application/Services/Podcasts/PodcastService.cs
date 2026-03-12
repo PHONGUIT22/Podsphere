@@ -30,6 +30,7 @@ public class PodcastService : IPodcastService
         // Lấy tất cả podcast từ Database, nhớ Include Category nếu muốn hiện tên thể loại
         var podcasts = await _context.Podcasts
             .Include(p => p.Category)
+            .Include(p=> p.Episodes) // Nếu muốn hiện số tập
             .ToListAsync();
 
         // Dùng AutoMapper để chuyển từ Entity sang Dto cho Frontend xài
