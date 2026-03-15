@@ -69,6 +69,17 @@ export const AudioPlayer = () => {
     }
   };
 
+  // Logic giữ chỗ để sau này bạn thêm hàm chuyển bài vào PlayerStore
+  const handlePlayPrevious = () => {
+    console.log("Chưa có logic. Mày hãy thêm hàm playPrevious() vào usePlayerStore");
+    // playPrevious(); 
+  };
+
+  const handlePlayNext = () => {
+    console.log("Chưa có logic. Mày hãy thêm hàm playNext() vào usePlayerStore");
+    // playNext();
+  };
+
   if (!currentEpisode) return null;
 
   return (
@@ -80,14 +91,19 @@ export const AudioPlayer = () => {
         onPause={() => setPlaying(false)}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
-        onEnded={() => setPlaying(false)}
+        onEnded={() => setPlaying(false)} // Có thể đổi thành handlePlayNext() nếu muốn tự động nhảy bài khi hết
       />
 
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
         {/* 1. Thông tin tập */}
         <div className="flex w-1/3 items-center gap-3">
           <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-zinc-100 dark:bg-zinc-800">
-            <img src="/placeholder.png" alt="" className="h-full w-full object-cover" />
+            {/* THAY ĐỔI: Dùng thumbnail thật từ Episode, nếu không có mới hiện placeholder */}
+            <img 
+              src={currentEpisode.thumbnail || "/placeholder.png"} 
+              alt={currentEpisode.title} 
+              className="h-full w-full object-cover" 
+            />
           </div>
           <div className="min-w-0">
             <h4 className="truncate text-sm font-bold text-zinc-900 dark:text-white">
@@ -104,7 +120,12 @@ export const AudioPlayer = () => {
             <button onClick={() => skipTime(-10)} className="text-zinc-400 hover:text-indigo-600 transition-colors">
               <RotateCcw size={20} />
             </button>
-            <button className="text-zinc-400 hover:text-indigo-600 transition-colors">
+            
+            {/* THAY ĐỔI: Gắn sự kiện chuyển bài trước */}
+            <button 
+              onClick={handlePlayPrevious}
+              className="text-zinc-400 hover:text-indigo-600 transition-colors"
+            >
               <SkipBack size={20} fill="currentColor" />
             </button>
             
@@ -115,9 +136,14 @@ export const AudioPlayer = () => {
               {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} className="ml-1" fill="currentColor" />}
             </button>
 
-            <button className="text-zinc-400 hover:text-indigo-600 transition-colors">
+            {/* THAY ĐỔI: Gắn sự kiện chuyển bài tiếp theo */}
+            <button 
+              onClick={handlePlayNext}
+              className="text-zinc-400 hover:text-indigo-600 transition-colors"
+            >
               <SkipForward size={20} fill="currentColor" />
             </button>
+
             <button onClick={() => skipTime(10)} className="text-zinc-400 hover:text-indigo-600 transition-colors">
               <RotateCw size={20} />
             </button>

@@ -14,6 +14,7 @@ export interface HealthRecommendationDto {
     stressWarning: string;
     suggestedPodcastTags: string[];
     advice: string;
+    recommendedPodcasts: string[];
 }
 
 // UserJournalDto.cs

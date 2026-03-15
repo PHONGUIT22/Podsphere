@@ -13,9 +13,11 @@ export const socialService = {
     return data;
   },
 
-  // --- Comment ---
+    // --- Comment ---
+    // Trong src/services/social.service.ts
   addComment: async (episodeId: string, comment: CreateCommentDto) => {
-    const { data } = await api.post<CommentDto>(`/episodes/${episodeId}/comments`, comment);
+    // Đổi từ /episodes thành /podcasts để khớp với BE PodcastsController
+    const { data } = await api.post<CommentDto>(`/podcasts/${episodeId}/comments`, comment);
     return data;
   },
 

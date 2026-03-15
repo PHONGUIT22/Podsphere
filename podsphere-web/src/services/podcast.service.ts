@@ -1,3 +1,4 @@
+import { CommentDto } from "@/types/social";
 import { api } from "../lib/api";
 import { PodcastDto, EpisodeDto, CategoryDto } from "../types/podcast";
 
@@ -24,5 +25,15 @@ export const podcastService = {
   getCategories: async () => {
     const { data } = await api.get<CategoryDto[]>("/categories");
     return data;
+  },
+  getRecommendedPodcasts: async () => {
+    // Gọi đến endpoint [HttpGet("recommended")] trong PodcastsController.cs
+    const { data } = await api.get<PodcastDto[]>("/podcasts/recommended");
+    return data;
+  },
+  getCommentsByEpisodeId: async (episodeId: string) => {
+    const { data } = await api.get<CommentDto[]>(`/podcasts/episodes/${episodeId}/comments`);
+    return data;
   }
+  
 };

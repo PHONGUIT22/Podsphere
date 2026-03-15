@@ -13,6 +13,7 @@ export interface PodcastDto {
 
 // EpisodeDto.cs
 export interface EpisodeDto {
+    thumbnail: string;
     id: string;
     title: string;
     audioUrl: string;
