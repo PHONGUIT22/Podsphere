@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { AudioPlayer } from "@/components/layout/AudioPlayer";
+import { AuthProvider } from "@/components/providers/AuthProvider"; // Import cái mới tạo
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,34 +22,35 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className={`${inter.className} antialiased selection:bg-indigo-100 selection:text-indigo-700`}>
+      {/* BỌC AUTH PROVIDER Ở ĐÂY */}
+        <AuthProvider> 
         <div className="flex min-h-screen bg-white dark:bg-black">
           
-          {/* 1. Sidebar cố định bên trái - Sẽ ẩn trên mobile nếu mày chưa làm Responsive */}
+          {/* 1. Sidebar cố định bên trái */}
           <Sidebar />
 
-          {/* 2. Cột bên phải chứa Header, Main Content và Footer */}
-          <div className="flex flex-1 flex-col">
+          {/* 2. CỤM BÊN PHẢI: Chỉ bọc lg:pl-64 đúng 1 lần ở div to nhất này để né Sidebar */}
+          <div className="flex w-full flex-col lg:pl-64">
             
-            {/* Navbar trên cùng - Đảm bảo nó cũng có padding left để không đè Sidebar */}
-            <div className="sticky top-0 z-40 w-full lg:pl-64">
+            {/* Navbar (Không cần pl-64 nữa vì div mẹ đã lo) */}
+            <div className="sticky top-0 z-40 w-full">
               <Navbar />
             </div>
 
-            {/* 3. Nội dung chính của trang */}
-            {/* pb-32: Padding bottom lớn hơn để không bị AudioPlayer (thường cao ~80-100px) che mất nội dung hay Footer */}
-            <main className="flex-1 transition-all duration-300 lg:pl-64 pb-32"> 
-              <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-                {children}
-              </div>
-              
-              {/* Footer nằm cuối phần content của main */}
-              <Footer />
+            {/* 3. Nội dung chính: Xóa max-w-7xl ở đây vì page.tsx đã tự bọc rồi */}
+            <main className="flex-1 pb-32"> 
+              {children}
             </main>
+            
+            {/* Footer */}
+            <Footer />
 
-            {/* 4. Trình phát nhạc cố định dưới đáy màn hình */}
-            <AudioPlayer />
           </div>
+
+          {/* 4. Trình phát nhạc cố định dưới đáy màn hình */}
+          <AudioPlayer />
         </div>
+      </AuthProvider>
       </body>
     </html>
   );

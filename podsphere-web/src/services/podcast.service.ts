@@ -23,7 +23,7 @@ export const podcastService = {
 
   // Lấy danh sách các danh mục (Category)
   getCategories: async () => {
-    const { data } = await api.get<CategoryDto[]>("/categories");
+    const { data } = await api.get<CategoryDto[]>("/podcasts/categories");
     return data;
   },
   getRecommendedPodcasts: async () => {

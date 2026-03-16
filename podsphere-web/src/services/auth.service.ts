@@ -15,6 +15,16 @@ export const authService = {
     return data;
   },
 
+  // THÊM HÀM NÀY THEO THẰNG AI BÀY ĐỂ LẤY THÔNG TIN USER TỪ TOKEN
+  getMe: async () => {
+    try {
+      const { data } = await api.get("/auth/me"); 
+      return data; // Trả về thông tin user (UserDto)
+    } catch (error) {
+      throw error;
+    }
+  },
+
   logout: () => {
     localStorage.removeItem("token");
     window.location.href = "/login";
