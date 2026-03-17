@@ -24,5 +24,6 @@ public interface IApplicationDbContext
     DbSet<UserFavoritePodcast> UserFavoritePodcasts { get; set;}
     DbSet<UserFavoriteMeditation> UserFavoriteMeditations { get; set;}
     DbSet<UserFavoriteEpisode> UserFavoriteEpisodes { get; set;}
+    DbSet<UserEpisodeHistory> UserEpisodeHistories { get; set; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -28,7 +28,7 @@ public class HearoDbContext : DbContext, IApplicationDbContext
     public DbSet<UserFavoritePodcast> UserFavoritePodcasts { get; set; }
     public DbSet<UserFavoriteMeditation> UserFavoriteMeditations { get; set; }
     public DbSet<UserFavoriteEpisode> UserFavoriteEpisodes { get; set; }
-
+    public DbSet<UserEpisodeHistory> UserEpisodeHistories { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
     base.OnModelCreating(modelBuilder);
@@ -85,5 +85,7 @@ public class HearoDbContext : DbContext, IApplicationDbContext
     // Trong OnModelCreating, cấu hình khóa chính kép
     modelBuilder.Entity<UserFavoriteEpisode>()
         .HasKey(ufe => new { ufe.UserId, ufe.EpisodeId });
+    modelBuilder.Entity<UserEpisodeHistory>()
+        .HasKey(h => new { h.UserId, h.EpisodeId });
 }
 }

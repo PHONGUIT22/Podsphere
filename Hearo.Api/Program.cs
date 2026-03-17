@@ -24,7 +24,8 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Amazon.S3; // Thư viện AWS
 using Hearo.Infrastructure.FileStorage;
-using Hearo.Api.Middlewares; // Để thấy Class triển khai S3
+using Hearo.Api.Middlewares;
+using Hearo.Application.Services.History; // Để thấy Class triển khai S3
 var builder = WebApplication.CreateBuilder(args);
 Stripe.StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
@@ -129,6 +130,8 @@ builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 //Storage
 
 builder.Services.AddScoped<IFileStorageService, S3StorageService>();
+//History
+builder.Services.AddScoped<IHistoryService, HistoryService>();
 // 4. CẤU HÌNH AUTHENTICATION (JWT)
 builder.Services.AddAuthentication(options =>
 {
