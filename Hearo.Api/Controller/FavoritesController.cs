@@ -25,4 +25,18 @@ public class FavoritesController : ControllerBase
         var result = await _favoriteService.GetMyFavoritePodcasts(userId);
         return Ok(result);
     }
+    [HttpPost("episode/{id}")] // ĐÂY MỚI LÀ NÓ NÈ
+    public async Task<IActionResult> ToggleEpisode(Guid id)
+    {
+        var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var result = await _favoriteService.ToggleEpisodeFavorite(userId, id);
+        return Ok(new { message = result });
+    }
+    [HttpGet("episodes")] // Đường dẫn sẽ là: /api/favorites/episodes
+    public async Task<IActionResult> GetMySavedEpisodes()
+    {
+        var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var result = await _favoriteService.GetMySavedEpisodes(userId);
+        return Ok(result);
+    }
 }

@@ -15,7 +15,6 @@ export const authService = {
     return data;
   },
 
-  // THÊM HÀM NÀY THEO THẰNG AI BÀY ĐỂ LẤY THÔNG TIN USER TỪ TOKEN
   getMe: async () => {
     try {
       const { data } = await api.get("/auth/me"); 

@@ -19,7 +19,12 @@ export default function PodcastDetailPage({ params }: { params: Promise<{ id: st
   const [podcast, setPodcast] = useState<PodcastDto | null>(null);
   const [episodes, setEpisodes] = useState<EpisodeDto[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // State 1: Thả tim cho CẢ SERIES PODCAST
   const [isFavorite, setIsFavorite] = useState(false); 
+  
+  // State 2 (MỚI THEO AI): Lưu TỪNG TẬP LẺ
+  const [savedEpisodeIds, setSavedEpisodeIds] = useState<string[]>([]);
   
   const { setCurrentEpisode, currentEpisode } = usePlayerStore();
 
@@ -34,11 +39,15 @@ export default function PodcastDetailPage({ params }: { params: Promise<{ id: st
         setPodcast(pData);
         setEpisodes(eData);
 
-        // Check xem đã thích chưa nếu đã login
         if (isAuthenticated) {
+          // Check xem Series này đã thích chưa
           const favorites = await favoriteService.getMyFavoritePodcasts();
           const found = favorites.some(f => f.id === podcastId);
           setIsFavorite(found);
+          
+          // NẾU CÓ API LẤY DANH SÁCH TẬP ĐÃ LƯU, GỌI VÀ SET VÀO ĐÂY:
+          const savedEps = await favoriteService.getMySavedEpisodes();
+          setSavedEpisodeIds(savedEps.map(e => e.id));
         }
       } catch (error) {
         console.error("Lỗi fetch data:", error);
@@ -49,6 +58,7 @@ export default function PodcastDetailPage({ params }: { params: Promise<{ id: st
     fetchDetail();
   }, [podcastId, isAuthenticated]);
 
+  // Handle: Thả tim Series Podcast
   const handleToggleFavorite = async () => {
     if (!isAuthenticated) {
       alert("Đăng nhập đi mậy mới lưu được chứ!");
@@ -59,6 +69,27 @@ export default function PodcastDetailPage({ params }: { params: Promise<{ id: st
       setIsFavorite(!isFavorite); 
     } catch (error) {
       console.error("Lỗi thả tim:", error);
+    }
+  };
+
+  // Handle (MỚI THEO AI): Lưu / Bỏ lưu từng tập Podcast (Episode)
+  const handleSaveEpisode = async (episodeId: string) => {
+    if (!isAuthenticated) {
+      alert("Mày chưa đăng nhập thì lưu vào mắt à?");
+      return;
+    }
+    try {
+      // Bỏ comment dòng dưới nếu Backend của mày đã code xong API này
+      await favoriteService.toggleEpisodeFavorite(episodeId);
+      
+      // Cập nhật UI ngay lập tức
+      setSavedEpisodeIds(prev => 
+        prev.includes(episodeId) 
+          ? prev.filter(id => id !== episodeId) // Bỏ lưu
+          : [...prev, episodeId]                // Lưu
+      );
+    } catch (error) {
+      console.error("Lỗi lưu trữ tập:", error);
     }
   };
 
@@ -73,7 +104,7 @@ export default function PodcastDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="relative min-h-screen pb-20 overflow-x-hidden">
-      {/* 1. DYNAMIC BACKGROUND BLUR - CỰC ĐẸP */}
+      {/* 1. DYNAMIC BACKGROUND BLUR */}
       <div className="absolute inset-0 h-[600px] pointer-events-none">
         <div 
           className="absolute inset-0 opacity-40 blur-[100px] scale-125 transition-all duration-1000"
@@ -83,10 +114,11 @@ export default function PodcastDetailPage({ params }: { params: Promise<{ id: st
             backgroundPosition: 'center'
           }}
         />
-        <div className="absolute inset-0 bg-linear-to-b from-transparent via-background/60 to-background"></div>
+        <div className="absolute inset-0 bg-linear-to-b from-transparent via-background/60 to-background dark:via-black/60 dark:to-black"></div>
       </div>
 
       <div className="relative z-10 container mx-auto px-4 pt-6 lg:pt-10">
+        
         {/* Nút quay lại */}
         <Link 
           href="/" 
@@ -101,7 +133,6 @@ export default function PodcastDetailPage({ params }: { params: Promise<{ id: st
         {/* 2. PODCAST HERO INFO */}
         <div className="flex flex-col md:flex-row gap-8 md:items-end lg:gap-14">
           <div className="relative group mx-auto md:mx-0 shrink-0">
-            {/* Glow effect đằng sau ảnh */}
             <div className="absolute -inset-2 bg-indigo-500/20 rounded-[3rem] blur-2xl group-hover:bg-indigo-500/40 transition duration-500"></div>
             <img 
               src={podcast.thumbnail || ""} 
@@ -139,6 +170,7 @@ export default function PodcastDetailPage({ params }: { params: Promise<{ id: st
               </button>
               
               <div className="flex gap-3">
+                {/* Nút Thả tim toàn Series */}
                 <button 
                   onClick={handleToggleFavorite}
                   className={`flex h-14 w-14 items-center justify-center rounded-2xl border transition-all duration-300 ${
@@ -177,21 +209,30 @@ export default function PodcastDetailPage({ params }: { params: Promise<{ id: st
             {episodes.length > 0 ? (
               episodes.map((ep, idx) => {
                 const isPlaying = currentEpisode?.id === ep.id;
+                
+                // KIỂM TRA TẬP NÀY ĐÃ LƯU CHƯA ĐỂ TRUYỀN XUỐNG EPISODE ITEM
+                const isSaved = savedEpisodeIds.includes(ep.id); 
+
                 return (
                   <div 
                     key={ep.id} 
-                    className={`group relative rounded-[1.5rem] transition-all duration-300 border border-transparent ${
+                    className={`group relative rounded-[1.5rem] transition-all duration-300 border border-transparent overflow-hidden ${
                       isPlaying 
                       ? 'bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-800' 
                       : 'hover:bg-white dark:hover:bg-zinc-900/50 hover:border-zinc-200 dark:hover:border-zinc-800'
                     }`}
                   >
+                    {/* TRUYỀN onSave VÀ isSaved XUỐNG ĐỂ UI CỦA NÓ TỰ XỬ LÝ */}
                     <EpisodeItem 
                       episode={{...ep, order: idx + 1}} 
                       onPlay={(ep: EpisodeDto) => setCurrentEpisode(ep)} 
+                      onSave={handleSaveEpisode}
+                      isSaved={isSaved}
                     />
+                    
+                    {/* Hiệu ứng sóng nhạc đang chạy */}
                     {isPlaying && (
-                      <div className="absolute left-2 top-1/2 -translate-y-1/2 flex gap-0.5 items-end h-4">
+                      <div className="absolute left-2 top-1/2 -translate-y-1/2 flex gap-0.5 items-end h-4 pointer-events-none">
                         <div className="w-1 bg-indigo-500 animate-[music-bar_0.8s_ease-in-out_infinite] h-full" />
                         <div className="w-1 bg-indigo-500 animate-[music-bar_1.2s_ease-in-out_infinite] h-2/3" />
                         <div className="w-1 bg-indigo-500 animate-[music-bar_1s_ease-in-out_infinite] h-1/2" />
@@ -210,7 +251,6 @@ export default function PodcastDetailPage({ params }: { params: Promise<{ id: st
         </section>
       </div>
 
-      {/* CSS Animation đơn giản cho thanh nhạc đang phát */}
       <style jsx>{`
         @keyframes music-bar {
           0%, 100% { height: 4px; }
