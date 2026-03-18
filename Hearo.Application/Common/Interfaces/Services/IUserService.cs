@@ -8,4 +8,6 @@ public interface IUserService
     Task<UserDto?> GetUserProfile(Guid userId);
     Task<SubscriptionDto?> GetActiveSubscription(Guid userId);
     Task<bool> UpgradeToPremium(Guid userId, string planType); // Free, Monthly, Yearly
+    Task<bool> UpdateProfile(Guid userId, UserDto userDto);
+
 }

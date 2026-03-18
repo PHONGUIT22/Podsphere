@@ -67,9 +67,23 @@ public async Task HandlePaymentSuccess(Guid userId)
     var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
     if (user != null)
     {
-        user.IsPremium = true; // "Mở khóa" cuộc đời cho User
-        user.PremiumExpiryDate = DateTime.UtcNow.AddMonths(1); // Cho dùng 1 tháng
+        // 1. Cập nhật trạng thái Premium cho User
+        user.IsPremium = true; 
+        user.PremiumExpiryDate = DateTime.UtcNow.AddMonths(1);
         
+        // 2. TẠO HÓA ĐƠN VÀ LƯU VÀO BẢNG PAYMENTS (THÊM ĐOẠN NÀY)
+        var payment = new Hearo.Domain.Entities.Payment // Thay bằng đúng namespace Entity 
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Amount = 50000, // 
+            Status = "Success",
+            CreatedAt = DateTime.UtcNow,
+        };
+
+        _context.Payments.Add(payment);
+
+        // 3. Lưu tất cả thay đổi
         await _context.SaveChangesAsync();
     }
 }

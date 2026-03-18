@@ -38,12 +38,40 @@ public class PodcastService : IPodcastService
     }
     public async Task<List<PodcastDto>> GetRecommendedPodcasts(Guid userId)
     {
+        // 1. Lấy phân tích sức khỏe
         var analysis = await _healthService.GetHealthAnalysis(userId);
-        var suggestedTags = analysis.SuggestedPodcastTags;
+        
+        // Lấy list tags, nếu null thì tạo list mới
+        var suggestedTags = analysis.SuggestedPodcastTags ?? new List<string>();
 
-        var podcasts = await _context.Podcasts
-            .Where(p => suggestedTags.Any(tag => p.Tags != null && p.Tags.Contains(tag)))
-            .ToListAsync();
+        List<Podcast> podcasts = new List<Podcast>();
+
+        // 2. Nếu CÓ tag gợi ý, thử tìm theo tag trước
+        if (suggestedTags.Any())
+        {
+            // Lấy hết podcast lên memory để filter cho dễ (hoặc dùng SQL LIKE)
+            var allPodcasts = await _context.Podcasts
+                .Include(p => p.Category)
+                .Where(p => p.Tags != null)
+                .ToListAsync();
+
+            podcasts = allPodcasts
+                .Where(p => suggestedTags.Any(tag => 
+                    p.Tags.Contains(tag, StringComparison.OrdinalIgnoreCase)))
+                .Take(3)
+                .ToList();
+        }
+
+        // 3. LOGIC QUAN TRỌNG: Nếu sau khi tìm theo tag vẫn RỖNG (hoặc ngay từ đầu ko có tag)
+        if (podcasts == null || !podcasts.Any())
+        {
+            // Lấy 3 podcast bất kỳ (mới nhất) để giao diện ĐÉCH BAO GIỜ bị trống
+            podcasts = await _context.Podcasts
+                .Include(p => p.Category)
+                .OrderByDescending(p => p.CreatedAt)
+                .Take(3)
+                .ToListAsync();
+        }
 
         return _mapper.Map<List<PodcastDto>>(podcasts);
     }

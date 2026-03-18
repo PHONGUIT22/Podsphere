@@ -20,9 +20,6 @@ export const usePlayerStore = create<PlayerState>((set) => ({
   setCurrentEpisode: (episode) => {
     // 1. Cập nhật State để Player ở dưới đáy màn hình hiện lên và hát ngay
     set({ currentEpisode: episode, isPlaying: true });
-
-    // 2. TỰ ĐỘNG GỌI API LƯU LỊCH SỬ
-    // Dùng .catch để nếu user chưa login (không có token) thì nó cũng không làm crash app
     historyService.addToHistory(episode.id).catch((err) => {
        console.warn("Lịch sử chưa được lưu (User có thể chưa đăng nhập):", err.message);
     });
