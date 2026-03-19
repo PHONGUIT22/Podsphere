@@ -7,4 +7,5 @@ public interface IHealthService
     Task<bool> UpdateHealthStats(Guid userId, int moodScore, string stressLevel, double sleepHours, string? note);
     Task<List<UserJournalDto>> GetUserJournals(Guid userId);
     Task<bool> AddJournal(Guid userId, string title, string content, string? mood);
+    Task<bool> DeleteJournal(Guid userId, Guid journalId);
 }

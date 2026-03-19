@@ -49,7 +49,9 @@ public class HealthService : IHealthService
         status,
         stressWarning,
         tags,
-        advice
+        advice,
+        stats.SleepHours,
+        stats.StressLevel
     );
 }
 // Thêm các hàm này vào Class HealthService của mày
@@ -78,6 +80,16 @@ public async Task<bool> AddJournal(Guid userId, string title, string content, st
 {
     var journal = new UserJournal { UserId = userId, Title = title, Content = content, Mood = mood };
     _context.UserJournals.Add(journal);
+    return await _context.SaveChangesAsync() > 0;
+}
+public async Task<bool> DeleteJournal(Guid userId, Guid journalId)
+{
+    var journal = await _context.UserJournals
+        .FirstOrDefaultAsync(j => j.Id == journalId && j.UserId == userId);
+        
+    if (journal == null) return false;
+
+    _context.UserJournals.Remove(journal);
     return await _context.SaveChangesAsync() > 0;
 }
 }

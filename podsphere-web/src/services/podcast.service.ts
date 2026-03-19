@@ -34,6 +34,15 @@ export const podcastService = {
   getCommentsByEpisodeId: async (episodeId: string) => {
     const { data } = await api.get<CommentDto[]>(`/podcasts/episodes/${episodeId}/comments`);
     return data;
+  },
+  // Gửi bình luận mới
+   addComment: async (episodeId: string, content: string, timestamp: number = 0) => {
+    // SỬA TẠI ĐÂY: Thêm /episodes/ vào giữa podcasts và id cho khớp Backend
+    const { data } = await api.post(`/podcasts/episodes/${episodeId}/comments`, { 
+      content, 
+      timestamp 
+    });
+    return data;
   }
   
 };

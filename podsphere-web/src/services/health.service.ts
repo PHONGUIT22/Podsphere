@@ -31,5 +31,8 @@ export const healthService = {
   addJournal: async (journalData: { title: string, content: string, mood: string | null }) => {
     const { data } = await api.post<UserJournalDto>("/health/journals", journalData);
     return data;
+  },
+  deleteJournal: async (id: string) => {
+    await api.delete(`/health/journals/${id}`);
   }
 };

@@ -1,5 +1,6 @@
 using Hearo.Domain.Entities;
 using Hearo.Application.Common.Mappings;
+using AutoMapper;
 
 namespace Hearo.Application.Common.Models.Health;
 
@@ -10,4 +11,9 @@ public record UserHealthStatsDto : IMapFrom<UserHealthStats>
     public double SleepHours { get; init; }
     public string? Note { get; init; }
     public DateTime UpdatedAt { get; init; }
+    public void Mapping(Profile profile)
+    {
+        profile.CreateMap<UserHealthStats, UserHealthStatsDto>();
+        profile.CreateMap<UserHealthStatsDto, UserHealthStats>();
+    }
 }

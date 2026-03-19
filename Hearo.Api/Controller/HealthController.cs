@@ -56,6 +56,13 @@ public class HealthController : ControllerBase
         var result = await _healthService.AddJournal(userId, request.Title, request.Content, request.Mood);
         return result ? Ok() : BadRequest("Lỗi lưu nhật ký rồi");
     }
+    [HttpDelete("journals/{id}")]
+    public async Task<IActionResult> DeleteJournal(Guid id)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var result = await _healthService.DeleteJournal(userId, id);
+        return result ? Ok("Đã xóa xong!") : NotFound("Không tìm thấy nhật ký mậy ơi");
+    }
 }
 
 public record UpdateStatsRequest(int MoodScore, string StressLevel, double SleepHours, string? Note);

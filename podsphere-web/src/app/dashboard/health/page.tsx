@@ -9,15 +9,25 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { UserHealthStatsDto, HealthRecommendationDto } from "@/types/health";
 import { PodcastDto } from "@/types/podcast"; 
 import { JournalEntryForm } from "@/components/features/JournalEntryForm";
-import { History, ChevronRight, ArrowRight, Sparkles, BrainCircuit, PlayCircle, Headphones } from "lucide-react";
+// THÊM ICON MỚI
+import { History, ChevronRight, ArrowRight, Sparkles, BrainCircuit, PlayCircle, Headphones, Edit3, Save, X, Moon, Smile, Zap } from "lucide-react";
 
 import Link from "next/link";
+import { toast } from "react-hot-toast";
 
 export default function HealthDashboard() {
   const [stats, setStats] = useState<UserHealthStatsDto | null>(null);
   const [rec, setRec] = useState<HealthRecommendationDto | null>(null);
   const [recommendedPodcasts, setRecommendedPodcasts] = useState<PodcastDto[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // STATE CHO VIỆC CẬP NHẬT CHỈ SỐ
+  const [isEditingStats, setIsEditingStats] = useState(false);
+  const [statsForm, setStatsForm] = useState({
+    moodScore: 5,
+    stressLevel: "Bình thường",
+    sleepHours: 7
+  });
 
   const fetchData = async () => {
     try {
@@ -27,14 +37,19 @@ export default function HealthDashboard() {
         healthService.getRecommendations(),
         podcastService.getRecommendedPodcasts()
       ]);
-      
-      console.log("Stats (Sinh học):", statsData);
-      console.log("Recommendation (Tâm trạng):", recData);
-      console.log("Podcasts Recs:", podData);
-
+      console.log("DỮ LIỆU STATS THỰC TẾ:", statsData);       
       setStats(statsData);
       setRec(recData);
       setRecommendedPodcasts(podData || []);
+
+      // Cập nhật giá trị ban đầu cho form edit
+      if (statsData) {    
+        setStatsForm({
+          moodScore: statsData.moodScore || 5,
+          stressLevel: statsData.stressLevel || "Bình thường",
+          sleepHours: statsData.sleepHours || 7
+        });
+      }
     } catch (error) {
       console.error("Lỗi lấy dữ liệu:", error);
     } finally {
@@ -46,11 +61,24 @@ export default function HealthDashboard() {
     fetchData();
   }, []);
 
+  // HÀM XỬ LÝ LƯU CHỈ SỐ SỨC KHỎE
+  const handleUpdateStats = async () => {
+    try {
+      const loadingToast = toast.loading("Đang phân tích chỉ số mới...");
+      await healthService.updateStats(statsForm);
+      toast.success("Đã cập nhật chỉ số sức khỏe!", { id: loadingToast });
+      setIsEditingStats(false);
+      await fetchData(); // Fetch lại để AI cập nhật lời khuyên mới
+    } catch (error) {
+      toast.error("Lỗi khi cập nhật mậy ơi!");
+    }
+  };
+
   const handleSaveJournal = async (data: { title: string, content: string, mood: string }) => {
     try {
       const result = await healthService.addJournal(data);
       if (result) {
-        alert("Lưu nhật ký thành công!");
+        toast.success("Lưu nhật ký thành công!");
         await fetchData(); 
       }
     } catch (err) {
@@ -62,7 +90,7 @@ export default function HealthDashboard() {
 
   return (
     <div className="max-w-[1400px] mx-auto space-y-10 pb-10">
-      {/* HEADER */}
+      {/* HEADER - Giữ nguyên */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 px-4 lg:px-0">
         <div className="space-y-1">
           <h1 className="text-4xl font-black tracking-tighter text-zinc-900 dark:text-white lg:text-5xl">
@@ -78,10 +106,10 @@ export default function HealthDashboard() {
         </div>
       </div>
 
-      {/* 1. LỜI KHUYÊN BANNER (Lấy từ biến rec) */}
+      {/* 1. LỜI KHUYÊN BANNER - Giữ nguyên */}
       {rec && (
         <div className="px-4 lg:px-0">
-          <div className="relative overflow-hidden rounded-[2.5rem] shadow-xl shadow-indigo-500/10">
+          <div className="relative overflow-hidden rounded-[2.5rem] shadow-xl shadow-indigo-500/10 transition-all hover:shadow-indigo-500/20">
             <RecommendationBanner rec={rec} />
           </div>
         </div>
@@ -90,20 +118,104 @@ export default function HealthDashboard() {
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-3 px-4 lg:px-0">
         <div className="lg:col-span-2 space-y-12">
           
-          {/* 2. CHỈ SỐ SINH HỌC (Lấy từ biến stats) */}
-          <section className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Sparkles className="text-indigo-600" size={20} />
-              <h3 className="text-xl font-black dark:text-white uppercase tracking-tight">Chỉ số sinh học</h3>
+          {/* 2. CHỈ SỐ SINH HỌC & FORM CẬP NHẬT */}
+          <section className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Sparkles className="text-indigo-600" size={20} />
+                <h3 className="text-xl font-black dark:text-white uppercase tracking-tight">Chỉ số sinh học</h3>
+              </div>
+              
+              {!isEditingStats ? (
+                <button 
+                  onClick={() => setIsEditingStats(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-xs font-bold hover:bg-indigo-600 hover:text-white transition-all"
+                >
+                  <Edit3 size={14} /> CẬP NHẬT CHỈ SỐ
+                </button>
+              ) : (
+                <button 
+                  onClick={() => setIsEditingStats(false)}
+                  className="text-zinc-400 hover:text-red-500 transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              )}
             </div>
-            {stats ? (
-              <HealthStatCard stats={stats} />
+
+            {isEditingStats ? (
+              /* FORM CẬP NHẬT CHỈ SỐ CỰC ĐẸP */
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 rounded-[2.5rem] bg-indigo-600/5 border-2 border-dashed border-indigo-500/20 animate-in zoom-in-95 duration-300">
+                <div className="space-y-3">
+                  <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-500">
+                    <Smile size={14} className="text-indigo-500" /> Tâm trạng ({statsForm.moodScore}/10)
+                  </label>
+                  <input 
+                    type="range" min="1" max="10" 
+                    value={statsForm.moodScore}
+                    onChange={(e) => setStatsForm({...statsForm, moodScore: parseInt(e.target.value)})}
+                    className="w-full accent-indigo-600"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-500">
+                    <Zap size={14} className="text-indigo-500" /> Mức độ Stress
+                  </label>
+                  <select 
+                    value={statsForm.stressLevel}
+                    onChange={(e) => setStatsForm({...statsForm, stressLevel: e.target.value})}
+                    className="w-full p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-bold outline-none focus:border-indigo-500"
+                  >
+                    <option value="Thấp">Thấp (Chill)</option>
+                    <option value="Bình thường">Bình thường</option>
+                    <option value="Hơi cao">Hơi cao</option>
+                    <option value="Căng thẳng">Rất Căng thẳng</option>
+                  </select>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-zinc-500">
+                    <Moon size={14} className="text-indigo-500" /> Giờ ngủ: {statsForm.sleepHours || 0}h
+                  </label>
+                  <input 
+                    type="number" 
+                    step="0.5"
+                    value={isNaN(statsForm.sleepHours) ? "" : statsForm.sleepHours}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const parsedVal = parseFloat(val);
+                      setStatsForm({
+                        ...statsForm, 
+                        sleepHours: isNaN(parsedVal) ? 0 : parsedVal 
+                      });
+                    }}
+                    className="w-full p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-bold outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div className="md:col-span-3 pt-4 border-t border-indigo-500/10 flex justify-end">
+                  <button 
+                    onClick={handleUpdateStats}
+                    className="flex items-center gap-2 px-8 py-3 rounded-2xl bg-indigo-600 text-white text-sm font-black shadow-lg shadow-indigo-500/20 hover:scale-105 active:scale-95 transition-all"
+                  >
+                    <Save size={18} /> LƯU CHỈ SỐ MỚI
+                  </button>
+                </div>
+              </div>
             ) : (
-              <div className="h-48 w-full rounded-[2rem] bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
+              /* HIỂN THỊ CARD CHỈ SỐ NHƯ CŨ */
+              stats ? (
+                <div className="transition-all hover:scale-[1.01]">
+                  <HealthStatCard stats={stats} />
+                </div>
+              ) : (
+                <div className="h-48 w-full rounded-[2rem] bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
+              )
             )}
           </section>
 
-          {/* 3. NHẬT KÝ TÂM TRẠNG */}
+          {/* 3. NHẬT KÝ TÂM TRẠNG - Giữ nguyên */}
           <section className="space-y-6">
             <div className="flex items-end justify-between border-b border-zinc-100 dark:border-zinc-800 pb-4">
               <div>
@@ -131,7 +243,7 @@ export default function HealthDashboard() {
                     </div>
                     <div>
                       <h4 className="text-lg font-black dark:text-white tracking-tight">Kho lưu trữ cảm xúc</h4>
-                      <p className="text-[11px] font-bold uppercase tracking-widest text-indigo-500">Xem lại hành trình của mày</p>
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-indigo-500">Xem lại hành trình của bạn</p>
                     </div>
                   </div>
                   <div className="h-10 w-10 flex items-center justify-center rounded-full bg-white dark:bg-zinc-800 shadow-md group-hover:translate-x-1 transition-all">
@@ -143,9 +255,10 @@ export default function HealthDashboard() {
           </section>
         </div>
 
-        {/* 4. SIDEBAR GỢI Ý */}
+        {/* 4. SIDEBAR GỢI Ý - Giữ nguyên */}
         <aside className="space-y-6">
-          <div className="sticky top-24">
+           {/* ... Giữ nguyên phần sidebar cũ ... */}
+           <div className="sticky top-24">
             <h3 className="text-xl font-black mb-4 dark:text-white uppercase tracking-tighter">Dành riêng cho mày</h3>
             <div className="rounded-[2.5rem] border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900/50 backdrop-blur-sm shadow-sm">
               <div className="flex items-center gap-2 mb-4">

@@ -5,5 +5,7 @@ public record HealthRecommendationDto(
     string MentalStatus, // Ví dụ: "Đang bất ổn", "Cần thư giãn"
     string StressWarning,
     List<string> SuggestedPodcastTags,
-    string Advice
+    string Advice,
+    double SleepHours, 
+    string StressLevel
 );

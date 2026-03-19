@@ -34,15 +34,16 @@ public class PodcastsController : ControllerBase
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         return Ok(await _podcastService.GetRecommendedPodcasts(userId));
     }
-    [Authorize] // Bắt buộc đăng nhập mới được cào phím
-    [HttpPost("{id}/comments")]
-    public async Task<IActionResult> AddComment(Guid episodeId, [FromBody] CreateCommentDto dto)
+    [Authorize]
+    [HttpPost("episodes/{id}/comments")] // Đổi route cho rõ ràng là comment của Episode
+    public async Task<IActionResult> AddComment(Guid id, [FromBody] CreateCommentDto dto)
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        var result = await _podcastService.AddComment(userId, episodeId, dto.Content, dto.Timestamp);
+        // Truyền id (là episodeId) vào service
+        var result = await _podcastService.AddComment(userId, id, dto.Content, dto.Timestamp);
 
-        if (!result) return BadRequest("Lỗi rồi , check lại cái PodcastId xem.");
+        if (!result) return BadRequest("Lỗi rồi, check lại ID xem.");
         return Ok("Đã đăng bình luận thành công!");
     }
     [HttpGet("{id}")]
