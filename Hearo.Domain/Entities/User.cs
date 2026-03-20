@@ -13,4 +13,6 @@ public class User : BaseEntity
     public UserHealthStats? HealthStats { get; set; }
     public bool IsPremium { get; set; } = false; 
     public DateTime? PremiumExpiryDate { get; set; }
+    public ICollection<AstrologyProfile> AstrologyProfiles { get; set; } = new List<AstrologyProfile>();
+    public ICollection<IChingDivination> IChingDivinations { get; set; } = new List<IChingDivination>();
 }

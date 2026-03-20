@@ -5,25 +5,43 @@ namespace Hearo.Application.Common.Interfaces.Persistence;
 
 public interface IApplicationDbContext
 {
+    // Nhóm User & Core
     DbSet<User> Users { get; set; }
-    public DbSet<UserHealthStats> UserHealthStats { get; set; }
-    public DbSet<Subscription> Subscriptions { get; set; }
-    public DbSet<UserJournal> UserJournals { get; set; }
-    public DbSet<Category> Categories { get; set; }
-    public DbSet<Podcast> Podcasts { get; set; }
-    public DbSet<Episode> Episodes { get; set; }
-    public DbSet<Meditation> Meditations { get; set; }
-    public DbSet<Course> Courses { get; set; }
-    public DbSet<Lesson> Lessons { get; set; }
-    public DbSet<UserCourse> UserCourses { get; set; }
-    public DbSet<Blog> Blogs { get; set; }
-    public DbSet<Review> Reviews { get; set; }
-    public DbSet<Comment> Comments { get; set; }
-    public DbSet<Notification> Notifications { get; set; }
-    public DbSet<Payment> Payments { get; set; }
-    DbSet<UserFavoritePodcast> UserFavoritePodcasts { get; set;}
-    DbSet<UserFavoriteMeditation> UserFavoriteMeditations { get; set;}
-    DbSet<UserFavoriteEpisode> UserFavoriteEpisodes { get; set;}
+    DbSet<Subscription> Subscriptions { get; set; }
+    DbSet<Notification> Notifications { get; set; }
+    DbSet<Payment> Payments { get; set; }
+
+    // Nhóm Sức khỏe (Health & Journal)
+    DbSet<UserHealthStats> UserHealthStats { get; set; }
+    DbSet<UserJournal> UserJournals { get; set; }
+
+    // Nhóm Nội dung (Podcast, Course, Blog)
+    DbSet<Category> Categories { get; set; }
+    DbSet<Podcast> Podcasts { get; set; }
+    DbSet<Episode> Episodes { get; set; }
+    DbSet<Meditation> Meditations { get; set; }
+    DbSet<Course> Courses { get; set; }
+    DbSet<Lesson> Lessons { get; set; }
+    DbSet<UserCourse> UserCourses { get; set; }
+    DbSet<Blog> Blogs { get; set; }
+
+    // Nhóm Tương tác xã hội
+    DbSet<Review> Reviews { get; set; }
+    DbSet<Comment> Comments { get; set; }
+
+    // Nhóm Thư viện & Lịch sử
+    DbSet<UserFavoritePodcast> UserFavoritePodcasts { get; set; }
+    DbSet<UserFavoriteMeditation> UserFavoriteMeditations { get; set; }
+    DbSet<UserFavoriteEpisode> UserFavoriteEpisodes { get; set; }
     DbSet<UserEpisodeHistory> UserEpisodeHistories { get; set; }
+
+    // Nhóm Huyền Học (Astrology & IChing)
+    DbSet<AstrologyProfile> AstrologyProfiles { get; set; }
+    DbSet<BaziChart> BaziCharts { get; set; }
+    DbSet<TuViChart> TuViCharts { get; set; }
+    DbSet<IChingDivination> IChingDivinations { get; set; }
+    DbSet<DailyAstrologyInsight> DailyAstrologyInsights { get; set; }
+
+    // Phương thức lưu dữ liệu
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

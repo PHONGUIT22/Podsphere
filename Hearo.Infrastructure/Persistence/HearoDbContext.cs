@@ -29,6 +29,12 @@ public class HearoDbContext : DbContext, IApplicationDbContext
     public DbSet<UserFavoriteMeditation> UserFavoriteMeditations { get; set; }
     public DbSet<UserFavoriteEpisode> UserFavoriteEpisodes { get; set; }
     public DbSet<UserEpisodeHistory> UserEpisodeHistories { get; set; }
+        // Trong file HearoDbContext.cs
+    public DbSet<AstrologyProfile> AstrologyProfiles { get; set; }
+    public DbSet<BaziChart> BaziCharts { get; set; }
+    public DbSet<TuViChart> TuViCharts { get; set; }
+    public DbSet<IChingDivination> IChingDivinations { get; set; }
+    public DbSet<DailyAstrologyInsight> DailyAstrologyInsights { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
     base.OnModelCreating(modelBuilder);
@@ -87,5 +93,53 @@ public class HearoDbContext : DbContext, IApplicationDbContext
         .HasKey(ufe => new { ufe.UserId, ufe.EpisodeId });
     modelBuilder.Entity<UserEpisodeHistory>()
         .HasKey(h => new { h.UserId, h.EpisodeId });
+     // 5.1. Cấu hình 1-N: User có nhiều AstrologyProfile
+    modelBuilder.Entity<AstrologyProfile>()
+        .HasOne(ap => ap.User)
+        .WithMany(u => u.AstrologyProfiles)
+        .HasForeignKey(ap => ap.UserId)
+        .OnDelete(DeleteBehavior.Cascade); // Xóa User -> Xóa luôn các hồ sơ lá số của nó
+
+    // 5.2. Cấu hình 1-1: AstrologyProfile <-> TuViChart
+    modelBuilder.Entity<AstrologyProfile>()
+        .HasOne(ap => ap.TuViChart)
+        .WithOne(t => t.Profile)
+        .HasForeignKey<TuViChart>(t => t.ProfileId)
+        .OnDelete(DeleteBehavior.Cascade); // Xóa Profile -> Xóa luôn lá số Tử Vi
+
+    // 5.3. Cấu hình 1-1: AstrologyProfile <-> BaziChart
+    modelBuilder.Entity<AstrologyProfile>()
+        .HasOne(ap => ap.BaziChart)
+        .WithOne(b => b.Profile)
+        .HasForeignKey<BaziChart>(b => b.ProfileId)
+        .OnDelete(DeleteBehavior.Cascade); // Xóa Profile -> Xóa luôn lá số Bát Tự
+
+    // 5.4. Cấu hình 1-N: User có nhiều Quẻ Kinh Dịch
+    modelBuilder.Entity<IChingDivination>()
+        .HasOne(i => i.User)
+        .WithMany(u => u.IChingDivinations)
+        .HasForeignKey(i => i.UserId)
+        .OnDelete(DeleteBehavior.Cascade);
+
+    // 5.5. Cấu hình DailyAstrologyInsight (CỰC KỲ QUAN TRỌNG ĐỂ TRÁNH LỖI SQL)
+    modelBuilder.Entity<DailyAstrologyInsight>()
+        .HasOne(d => d.User)
+        .WithMany() 
+        .HasForeignKey(d => d.UserId)
+        .OnDelete(DeleteBehavior.Cascade);
+
+    // Chặn lỗi Cascade: Nếu Admin xóa 1 bài Podcast/Meditation, thì cái Lời khuyên (Insight) 
+    // của User không bị xóa theo, mà cột ID đó chỉ biến thành NULL thôi.
+    modelBuilder.Entity<DailyAstrologyInsight>()
+        .HasOne(d => d.RecommendedPodcast)
+        .WithMany()
+        .HasForeignKey(d => d.RecommendedPodcastId)
+        .OnDelete(DeleteBehavior.SetNull); 
+
+    modelBuilder.Entity<DailyAstrologyInsight>()
+        .HasOne(d => d.RecommendedMeditation)
+        .WithMany()
+        .HasForeignKey(d => d.RecommendedMeditationId)
+        .OnDelete(DeleteBehavior.SetNull);
 }
 }

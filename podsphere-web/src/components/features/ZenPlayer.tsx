@@ -17,54 +17,67 @@ export function ZenPlayer({ meditation, onClose }: Props) {
   const mainAudioRef = useRef<HTMLAudioElement>(null);
   const ambientAudioRef = useRef<HTMLAudioElement>(null);
 
-  // LINK NHẠC NỀN CHUẨN
+  // LINK NHẠC NỀN CHUẨN (Mày nên tải về bỏ vào folder public/audio/ cho chắc ăn nhất)
+ // LINK NHẠC NỀN CHUẨN (OPEN SOURCE, KHÔNG BỊ CHẶN)
   const ambientSources: Record<string, string> = {
-    rain: "https://cdn.pixabay.com/audio/2022/01/18/audio_651336c1e3.mp3",
-    wind: "https://cdn.pixabay.com/audio/2021/08/04/audio_c36173a14e.mp3",
-    waves: "https://cdn.pixabay.com/audio/2022/03/15/audio_248559a4bb.mp3"
+    // Tiếng mưa nhẹ nhàng
+    rain: "https://upload.wikimedia.org/wikipedia/commons/d/de/Rain_on_a_tin_roof.ogg",
+    
+    // Tiếng gió thổi
+    wind: "https://upload.wikimedia.org/wikipedia/commons/3/30/Wind_blowing_through_trees.ogg",
+    
+    // Tiếng sóng biển vỗ
+    waves: "https://upload.wikimedia.org/wikipedia/commons/5/52/Ocean_waves_on_the_beach.ogg"
   };
 
   // 1. LOGIC NÚT PLAY/PAUSE CHÍNH
   const togglePlay = () => {
     if (isPlaying) {
-      // Đang phát -> Ấn dừng
       mainAudioRef.current?.pause();
       ambientAudioRef.current?.pause();
+      setIsPlaying(false);
     } else {
-      // Đang dừng -> Ấn phát
       mainAudioRef.current?.play().catch(e => console.log("Lỗi nhạc chính:", e));
       if (ambientType) {
         ambientAudioRef.current?.play().catch(e => console.log("Lỗi nhạc nền:", e));
       }
+      setIsPlaying(true);
     }
-    setIsPlaying(!isPlaying);
   };
 
   // 2. LOGIC ĐỔI NHẠC NỀN (BẤM LÀ KÊU LUÔN)
   const toggleAmbient = (type: string) => {
-    const audioEl = ambientAudioRef.current;
-    if (!audioEl) return;
-
     if (ambientType === type) {
-      // Đang bật -> Ấn tắt
+      // Nếu bấm lại icon đang bật -> Tắt nhạc nền đi
       setAmbientType(null);
-      audioEl.pause();
     } else {
-      // Đổi sang âm thanh khác hoặc Bật lên
+      // Đổi sang nhạc nền khác
       setAmbientType(type);
-      audioEl.src = ambientSources[type];
-      audioEl.load(); // Bắt buộc phải có để trình duyệt load file mới
       
-      // Cho nó kêu luôn để user nghe thử (Preview)
-      audioEl.play().catch(e => console.log("Lỗi tải nhạc nền:", e));
-      
-      // Tiện tay bật luôn cả bài thiền chính nếu nó đang tắt
+      // Nếu nhạc chính đang tắt, thì tiện tay bật luôn
       if (!isPlaying) {
-        mainAudioRef.current?.play().catch(() => {});
         setIsPlaying(true);
+        mainAudioRef.current?.play().catch(() => {});
       }
     }
   };
+
+  // Theo dõi sự thay đổi của ambientType và isPlaying để Play/Pause nhạc nền
+  useEffect(() => {
+    const ambientAudio = ambientAudioRef.current;
+    if (!ambientAudio) return;
+
+    // Giảm âm lượng nhạc nền xuống 40% để không đè mất giọng thiền
+    ambientAudio.volume = 0.4;
+
+    if (ambientType && isPlaying) {
+      // Thay đổi nguồn nhạc và phát
+      ambientAudio.src = ambientSources[ambientType];
+      ambientAudio.play().catch(e => console.log("Lỗi tải nhạc nền:", e));
+    } else {
+      ambientAudio.pause();
+    }
+  }, [ambientType, isPlaying]);
 
   // 3. LOGIC ĐỒNG HỒ ĐẾM NGƯỢC
   useEffect(() => {
@@ -99,6 +112,7 @@ export function ZenPlayer({ meditation, onClose }: Props) {
     ambientAudioRef.current?.pause();
     setTimeLeft(meditation.duration > 0 ? meditation.duration : 300);
     setBreathText("Sẵn sàng?");
+    if (mainAudioRef.current) mainAudioRef.current.currentTime = 0;
   };
 
   const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
@@ -116,18 +130,18 @@ export function ZenPlayer({ meditation, onClose }: Props) {
         <X size={18} /> ĐÓNG
       </button>
 
-      <div className="relative z-10 flex flex-col items-center w-full max-w-md">
+      <div className="relative z-10 flex flex-col items-center w-full max-w-md mt-10">
         
         <div className="text-center mb-8 space-y-2">
           <span className="px-4 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-black uppercase tracking-widest border border-indigo-500/30 shadow-lg">
             {meditation.target}
           </span>
-          <h2 className="text-3xl font-black tracking-tight drop-shadow-md">{meditation.title}</h2>
+          <h2 className="text-3xl font-black tracking-tight drop-shadow-md px-4">{meditation.title}</h2>
           <p className="text-5xl font-black tabular-nums tracking-tighter mt-4">{formatTime(timeLeft)}</p>
         </div>
 
-        {/* Vòng tròn nhịp thở */}
-        <div className="relative flex items-center justify-center mb-12 h-64 w-64">
+        {/* Vòng tròn nhịp thở (Breathing Guide) */}
+        <div className="relative flex items-center justify-center mb-16 h-64 w-64">
           <div className={`absolute w-64 h-64 rounded-full bg-indigo-500/20 blur-2xl transition-all duration-[4000ms] ${isPlaying && breathText === "Hít vào..." ? 'scale-150 opacity-50' : 'scale-100 opacity-20'}`} />
           <div className={`relative w-48 h-48 rounded-full border-2 border-indigo-400/50 flex items-center justify-center transition-all duration-[4000ms] ${isPlaying && breathText === "Hít vào..." ? 'scale-125 border-indigo-400 bg-indigo-500/10' : 'scale-100'}`}>
              <span className="text-sm font-bold tracking-widest uppercase text-indigo-100 shadow-black drop-shadow-md">
@@ -138,34 +152,44 @@ export function ZenPlayer({ meditation, onClose }: Props) {
 
         {/* Nút điều khiển */}
         <div className="flex items-center gap-8 mb-12">
-          <button onClick={resetTimer} className="p-4 rounded-full bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all">
+          <button onClick={resetTimer} className="p-4 rounded-full bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all" title="Bắt đầu lại">
             <RotateCcw size={24} />
           </button>
           <button onClick={togglePlay} className="w-24 h-24 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition-all shadow-[0_0_40px_rgba(255,255,255,0.2)]">
             {isPlaying ? <Pause size={40} fill="black" /> : <Play size={40} fill="black" className="ml-2" />}
           </button>
-          <div className="w-14"></div>
+          <div className="w-14"></div> {/* Spacer để cân bằng với nút Reset bên trái */}
         </div>
 
         {/* Mix Nhạc nền */}
-        <div className="flex gap-4 items-center bg-black/40 p-4 rounded-3xl backdrop-blur-md border border-white/5 shadow-2xl">
-          <p className="text-[10px] font-black uppercase tracking-widest opacity-50 mr-2 ml-2">Âm thanh:</p>
-          <AmbientButton icon={<CloudRain size={20} />} active={ambientType === 'rain'} onClick={() => toggleAmbient('rain')} />
-          <AmbientButton icon={<Wind size={20} />} active={ambientType === 'wind'} onClick={() => toggleAmbient('wind')} />
-          <AmbientButton icon={<Waves size={20} />} active={ambientType === 'waves'} onClick={() => toggleAmbient('waves')} />
+        <div className="flex gap-3 items-center bg-black/40 p-4 rounded-[2rem] backdrop-blur-md border border-white/5 shadow-2xl">
+          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mr-2 ml-2">Âm thanh:</p>
+          <AmbientButton icon={<CloudRain size={20} />} active={ambientType === 'rain'} onClick={() => toggleAmbient('rain')} title="Tiếng Mưa" />
+          <AmbientButton icon={<Wind size={20} />} active={ambientType === 'wind'} onClick={() => toggleAmbient('wind')} title="Tiếng Gió" />
+          <AmbientButton icon={<Waves size={20} />} active={ambientType === 'waves'} onClick={() => toggleAmbient('waves')} title="Sóng Biển" />
         </div>
       </div>
 
-      {/* AUDIO TAGS LUÔN RENDER ĐỂ KHÔNG BỊ LỖI REF */}
+      {/* AUDIO TAGS LUÔN RENDER */}
       <audio ref={mainAudioRef} src={meditation.audioUrl} loop className="hidden" />
+      {/* Không set src cứng ở đây nữa, useEffect sẽ tự lo việc gán src */}
       <audio ref={ambientAudioRef} loop className="hidden" />
     </div>
   );
 }
 
-function AmbientButton({ icon, active, onClick }: any) {
+// Sub-component cho nút chọn nhạc nền
+function AmbientButton({ icon, active, onClick, title }: any) {
   return (
-    <button onClick={onClick} className={`p-3 rounded-2xl transition-all ${active ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40 scale-105' : 'bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700'}`}>
+    <button 
+      onClick={onClick} 
+      title={title}
+      className={`p-3.5 rounded-[1.2rem] transition-all duration-300 ${
+        active 
+        ? 'bg-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.5)] scale-110' 
+        : 'bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+      }`}
+    >
       {icon}
     </button>
   );
