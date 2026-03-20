@@ -28,9 +28,11 @@ export interface UserJournalDto {
 
 // MeditationDto.cs
 export interface MeditationDto {
-    id: string;
-    title: string;
-    audioUrl: string;
-    duration: number;
-    target: string;
+  id: string;
+  title: string;
+  audioUrl: string;
+  thumbnail: string;
+  duration: number;
+  target: string;
+  description: string;
 }

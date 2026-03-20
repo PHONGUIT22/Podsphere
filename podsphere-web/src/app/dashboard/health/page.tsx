@@ -10,7 +10,7 @@ import { UserHealthStatsDto, HealthRecommendationDto } from "@/types/health";
 import { PodcastDto } from "@/types/podcast"; 
 import { JournalEntryForm } from "@/components/features/JournalEntryForm";
 // THÊM ICON MỚI
-import { History, ChevronRight, ArrowRight, Sparkles, BrainCircuit, PlayCircle, Headphones, Edit3, Save, X, Moon, Smile, Zap } from "lucide-react";
+import { History, ChevronRight, ArrowRight, Sparkles, BrainCircuit, PlayCircle, Headphones, Edit3, Save, X, Moon, Smile, Zap, Wind } from "lucide-react";
 
 import Link from "next/link";
 import { toast } from "react-hot-toast";
@@ -117,7 +117,26 @@ export default function HealthDashboard() {
 
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-3 px-4 lg:px-0">
         <div className="lg:col-span-2 space-y-12">
-          
+               {/* --- BẮT ĐẦU PHẦN SỬA THEO AI: AI NUDGE --- */}
+          {(statsForm.stressLevel === "High" || statsForm.stressLevel === "Căng thẳng") && (
+            <div className="relative overflow-hidden rounded-[2.5rem] bg-linear-to-r from-indigo-600 to-purple-700 p-8 text-white shadow-xl shadow-indigo-500/20 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="space-y-2 text-center md:text-left">
+                  <h4 className="font-black text-2xl tracking-tight">Mày đang stress quá mậy! 🧘‍♂️</h4>
+                  <p className="text-sm text-indigo-100 opacity-90 font-medium">AI nhận thấy mức độ căng thẳng của mày đang cao. Dành 5 phút thiền cấp tốc để cân bằng lại nhé.</p>
+                </div>
+                <Link 
+                  href="/dashboard/meditation?target=Quick"
+                  className="shrink-0 px-8 py-4 rounded-2xl bg-white text-indigo-700 text-sm font-black hover:bg-indigo-50 transition-all uppercase tracking-widest shadow-lg active:scale-95"
+                >
+                  Thiền ngay
+                </Link>
+              </div>
+              {/* Decor chìm phía sau cho xịn */}
+              <Wind size={120} className="absolute -right-6 -bottom-6 opacity-10 rotate-12 pointer-events-none" />
+            </div>
+          )}
+          {/* --- KẾT THÚC PHẦN AI NUDGE --- */}
           {/* 2. CHỈ SỐ SINH HỌC & FORM CẬP NHẬT */}
           <section className="space-y-6">
             <div className="flex items-center justify-between">
