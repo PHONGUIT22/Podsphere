@@ -25,7 +25,8 @@ using FluentValidation.AspNetCore;
 using Amazon.S3; // Thư viện AWS
 using Hearo.Infrastructure.FileStorage;
 using Hearo.Api.Middlewares;
-using Hearo.Application.Services.History; // Để thấy Class triển khai S3
+using Hearo.Application.Services.History;
+using Hearo.Infrastructure.Services; // Để thấy Class triển khai S3
 var builder = WebApplication.CreateBuilder(args);
 Stripe.StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
@@ -132,6 +133,13 @@ builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 builder.Services.AddScoped<IFileStorageService, S3StorageService>();
 //History
 builder.Services.AddScoped<IHistoryService, HistoryService>();
+// Astrology Service
+builder.Services.AddScoped<IAstrologyService, AstrologyService>();
+builder.Services.AddHttpClient(); // Đăng ký Factory chung
+
+builder.Services.AddHttpClient("AstrologyClient", client => {
+    client.BaseAddress = new Uri("http://localhost:3001/");
+});
 // 4. CẤU HÌNH AUTHENTICATION (JWT)
 builder.Services.AddAuthentication(options =>
 {
