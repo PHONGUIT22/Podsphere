@@ -25,7 +25,7 @@ public class AstrologyController : ControllerBase
     public async Task<IActionResult> CreateProfile([FromBody] CreateProfileRequest request)
     {
         // 1. Gọi sang NodeJS lấy dữ liệu Bát tự/Tử vi
-        var jsonData = await _astrologyService.GetAstrologyDataAsync(request.BirthDate, request.Hour);
+        var jsonData = await _astrologyService.GetAstrologyDataAsync(request.BirthDate, request.Hour, request.IsMale);
 
         if (string.IsNullOrEmpty(jsonData)) return BadRequest("Lỗi tính toán rồi mậy!");
 

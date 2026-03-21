@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 using System.Text;
 
 using Hearo.Infrastructure.Persistence;
@@ -26,7 +25,9 @@ using Amazon.S3; // Thư viện AWS
 using Hearo.Infrastructure.FileStorage;
 using Hearo.Api.Middlewares;
 using Hearo.Application.Services.History;
-using Hearo.Infrastructure.Services; // Để thấy Class triển khai S3
+using Hearo.Infrastructure.Services;
+using Microsoft.OpenApi.Models; // Để thấy Class triển khai S3
+
 var builder = WebApplication.CreateBuilder(args);
 Stripe.StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
@@ -66,6 +67,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
+    // 1. Định nghĩa scheme (Vẫn giữ Id là "Bearer")
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -73,20 +75,26 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Dán Token JWT vào đây (không cần thêm chữ Bearer phía trước)."
+        Description = "JWT Authorization header using the Bearer scheme."
     });
 
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    // 2. Thêm Requirement (Cách viết mới cho bản v10/OpenApi 2.x)
+options.AddSecurityRequirement(new OpenApiSecurityRequirement
+{
     {
+        new OpenApiSecurityScheme
         {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-            },
-            Array.Empty<string>()
-        }
-    });
+            Reference = new OpenApiReference 
+            { 
+                Type = ReferenceType.SecurityScheme, 
+                Id = "Bearer" 
+            }
+        },
+        Array.Empty<string>()
+    }
 });
+});
+
 
 // Bổ sung CORS (Rất quan trọng khi gọi API từ Frontend)
 builder.Services.AddCors(options =>
@@ -99,9 +107,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
 // Đăng ký AutoMapper quét tầng Application
-builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
-
-// JWT Generator
+builder.Services.AddAutoMapper(cfg => {}, typeof(MappingProfile));// JWT Generator
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
 // Nhóm Xác thực & Người dùng

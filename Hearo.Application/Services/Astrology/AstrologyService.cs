@@ -14,11 +14,15 @@ public class AstrologyService : IAstrologyService
         _httpClientFactory = httpClientFactory;
     }
 
-    public async Task<string> GetAstrologyDataAsync(DateTime birthDate, int hour)
+    public async Task<string> GetAstrologyDataAsync(DateTime birthDate, int hour, bool isMale)
     {
         var client = _httpClientFactory.CreateClient("AstrologyClient");
         
-        var url = $"api/astrology/info?year={birthDate.Year}&month={birthDate.Month}&day={birthDate.Day}&hour={hour}";
+        // Đổi bool sang số 1 (Nam) hoặc 0 (Nữ) để NodeJS dễ đọc
+        int gender = isMale ? 1 : 0;
+
+        // Cập nhật URL: Thêm tham số &gender vào cuối
+        var url = $"api/astrology/tuvi-pro?year={birthDate.Year}&month={birthDate.Month}&day={birthDate.Day}&hour={hour}&gender={gender}";
 
         var response = await client.GetAsync(url);
 
@@ -27,6 +31,6 @@ public class AstrologyService : IAstrologyService
             return await response.Content.ReadAsStringAsync();
         }
 
-        return string.Empty; // Trả về chuỗi rỗng thay vì null cho an toàn
+        return string.Empty; 
     }
 }
