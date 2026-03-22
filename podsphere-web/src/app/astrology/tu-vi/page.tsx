@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Send, Sparkles, User, Calendar, Clock, Venus, Mars } from "lucide-react";
+import { ArrowLeft, Sparkles, User, Calendar, Clock, Venus, Mars } from "lucide-react";
 import Link from "next/link";
 import axios from "axios";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { TuViGrid } from "@/components/astrology/TuViGrid"; // Component tao đã đưa hôm qua
+import { TuViGrid } from "@/components/astrology/TuViGrid";
 import { toast } from "react-hot-toast";
 
 export default function TuViPage() {
   const [loading, setLoading] = useState(false);
-  const [resultData, setResultData] = useState<any>(null);
+  // Sửa tên cho dễ hiểu: laSoData chứa toàn bộ JSON trả về từ API
+  const [laSoData, setLaSoData] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -22,6 +23,8 @@ export default function TuViPage() {
   const handleCalculate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setLaSoData(null); // Reset lá số cũ khi bấm tính toán lại
+    console.log("Data to be sent:", formData)
     try {
       const token = localStorage.getItem("token");
       const res = await axios.post(
@@ -30,16 +33,23 @@ export default function TuViPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Parse cục JSON từ Backend trả về
-      const parsed = JSON.parse(res.data.data);
-      // Gắn thêm họ tên vào để hiện ở Thiên Bàn
-      parsed.fullName = formData.fullName;
+      // Cục JSON từ Python nằm trong res.data.data
+      const rawPythonData = res.data.data;
+
+      // Parse cục JSON này để React có thể đọc được
+      const parsedData = JSON.parse(rawPythonData);
       
-      setResultData(parsed);
+      // Gắn thêm họ tên vào để hiện ở Thiên Bàn
+      parsedData.fullName = formData.fullName;
+
+      setLaSoData(parsedData);
       toast.success("Đã lập xong lá số cho mày!");
-    } catch (error) {
+
+    } catch (error: any) {
       console.error(error);
-      toast.error("Lỗi rồi mậy, check lại Backend/NodeJS đi!");
+      // Cải thiện báo lỗi: Lấy lỗi cụ thể từ backend nếu có
+      const errorMessage = error.response?.data?.error || "Lỗi rồi mậy, check lại Backend/NodeJS đi!";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -54,7 +64,7 @@ export default function TuViPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
         
-        {/* 2. CỘT TRÁI: FORM NHẬP LIỆU */}
+        {/* 2. CỘT TRÁI: FORM NHẬP LIỆU (Giữ nguyên) */}
         <div className="lg:col-span-1 space-y-8 animate-in fade-in slide-in-from-left-4 duration-700">
           <div className="space-y-2">
             <h1 className="text-4xl font-black text-white tracking-tighter uppercase">Lập Lá Số <span className="text-indigo-500">Tử Vi</span></h1>
@@ -131,32 +141,32 @@ export default function TuViPage() {
           </form>
         </div>
 
-        {/* 3. CỘT PHẢI: HIỂN THỊ KẾT QUẢ */}
+        {/* 3. CỘT PHẢI: HIỂN THỊ KẾT QUẢ (Đã sửa) */}
         <div className="lg:col-span-2 min-h-[600px] flex flex-col">
-          {resultData ? (
+          {laSoData ? (
             <div className="space-y-6 animate-in zoom-in-95 duration-500">
                <div className="flex items-center justify-between px-2">
                   <h2 className="text-xl font-black text-white uppercase tracking-widest">Lá Số Đã Lập</h2>
                   <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20">TRỰC TUYẾN</span>
                </div>
-               {/* VẼ LÁ SỐ */}
-               <TuViGrid data={resultData} />
+               
+               {/* VẼ LÁ SỐ: Truyền cục laSoData đã được parse xuống đây */}
+               <TuViGrid data={laSoData} />
                             
-              {/* GIẢI THÍCH NHANH */}
+              {/* GIẢI THÍCH NHANH: Lấy data từ cục JSON mới cho chính xác */}
               <div className="p-8 rounded-[2.5rem] bg-indigo-600/5 border border-indigo-500/10 space-y-4">
                 <h4 className="text-indigo-400 font-black text-sm uppercase tracking-widest flex items-center gap-2">
                   <Sparkles size={16} /> Nhận định tổng quan
                 </h4>
                 <p className="text-sm text-zinc-400 leading-relaxed font-medium">
-                  Lá số của <span className="text-white font-bold">{resultData?.fullName}</span> sinh năm <span className="text-white font-bold">{resultData?.canChi?.year}</span> ({resultData?.conGiap}). 
-                  Mệnh đóng tại cung <span className="text-white font-bold">Tý</span>, 
-                  có ngũ hành cục là <span className="text-indigo-400 font-bold">{resultData?.cuc} (Mộc Tam Cục)</span>. 
-                  Lá số này cho thấy mày là người thông minh, có quý nhân phù trợ, hãy nghe thêm các podcast về "Chữa lành tâm hồn" trên PodSphere để cân bằng năng lượng nhé!
+                  Lá số của <span className="text-white font-bold">{laSoData.fullName}</span> sinh năm <span className="text-white font-bold">{laSoData.amLich?.canChiNam}</span>.
+                  Mệnh đóng tại cung <span className="text-white font-bold">{laSoData.anCung?.cung_menh}</span>.
+                  Mày là người có tư duy nhạy bén, hãy nghe thêm các podcast về "Chữa lành tâm hồn" trên PodSphere để cân bằng năng lượng nhé!
                 </p>
               </div>
             </div>
           ) : (
-            /* TRẠNG THÁI CHỜ */
+            /* TRẠNG THÁI CHỜ (Giữ nguyên) */
             <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-zinc-800 rounded-[3rem] text-center p-10">
                <div className="w-20 h-20 rounded-full bg-zinc-900 flex items-center justify-center mb-6">
                   <Sparkles size={40} className="text-zinc-700" />

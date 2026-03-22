@@ -13,7 +13,7 @@ function anSaoChiNam(engine, chiNam) {
 
     // Thái Tuế bắt đầu ngay tại Chi của Năm sinh, sau đó đi thuận
     vongThaiTue.forEach((sao, i) => {
-        engine.addStar(chiNamIdx + i, sao);
+        engine.addStar((chiNamIdx + i) % 12, sao);
     });
 
     // 2. SAO THIÊN MÃ (Nghị lực, di chuyển)

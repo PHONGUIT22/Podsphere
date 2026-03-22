@@ -10,6 +10,8 @@ class TuViEngine {
     constructor() {
         this.palaces = [];
         this.cuc = 0;
+        this.canNam = "";
+        this.chiNam = "";
     }
 
     setupPalaces(thangAm, gioAmIdx) {
@@ -50,7 +52,7 @@ class TuViEngine {
                 '甲': 'Giáp', '乙': 'Ất', '丙': 'Bính', '丁': 'Đinh', '戊': 'Mậu', 
                 '己': 'Kỷ', '庚': 'Canh', '辛': 'Tân', '壬': 'Nhâm', '癸': 'Quý'
             };
-            const canNam = canVietNames[canHan]; 
+            this.canNam = canVietNames[canHan]; 
 
             // 2. DỊCH CHI NĂM SANG TIẾNG VIỆT (Tý, Sửu...) - CHỖ NÀY MÀY THIẾU NÈ!
             const chiHan = lunar.getYearZhi();
@@ -59,7 +61,7 @@ class TuViEngine {
                 '巳': 'Tỵ', '午': 'Ngọ', '未': 'Mùi', '申': 'Thân', '酉': 'Dậu', 
                 '戌': 'Tuất', '亥': 'Hợi'
             };
-            const chiNam = chiVietNames[chiHan]; // Đã định nghĩa chiNam
+            this.chiNam = chiVietNames[chiHan]; // Đã định nghĩa chiNam
 
             // 3. Lấy các thông số phụ trợ
             const chiMenh = CHI[menhIdx];
@@ -68,12 +70,12 @@ class TuViEngine {
             const gioAmIdx = lunar.getTimeZhiIndex();
 
             // 4. GỌI CÁC MODULE BẮN SAO (Dùng đúng các biến đã khai báo ở trên)
-            this.cuc = anChinhTinh(this, canNam, chiMenh, ngayAm);
+            this.cuc = anChinhTinh(this, this.canNam, chiMenh, ngayAm);
             anSaoThangGio(this, thangAm, gioAmIdx);
-            anSaoCanNam(this, canNam);
-            anSaoChiNam(this, chiNam); // Hết lỗi ReferenceError
-            anVongTrangSinh(this, this.cuc, isMale, canNam);
-            anSaoTuan(this, canNam, chiNam);
+            anSaoCanNam(this, this.canNam);
+            anSaoChiNam(this, this.chiNam); // Hết lỗi ReferenceError
+            anVongTrangSinh(this, this.cuc, isMale, this.canNam);
+            anSaoTuan(this, this.canNam, this.chiNam);
         }
 
     getLaSo() {

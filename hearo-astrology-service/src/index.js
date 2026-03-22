@@ -1,49 +1,76 @@
+// src/index.js
 const express = require('express');
-const TuViEngine = require('./TuViEngine');
+const cors = require('cors');
+const axios = require('axios');
 const { Solar } = require('lunar-javascript');
+
 const app = express();
+app.use(cors());
+app.use(express.json());
 
-app.get('/api/astrology/tuvi-pro', (req, res) => {
-    // 1. Bốc thêm gender và minute từ query
-    const { year, month, day, hour, minute, name, gender } = req.query;
-    
-    const solar = Solar.fromYmdHms(
-        parseInt(year), 
-        parseInt(month), 
-        parseInt(day), 
-        parseInt(hour), 
-        parseInt(minute || 0), 0
-    );
-    const lunar = solar.getLunar();
-    
-    // 2. Định nghĩa isMale chuẩn (1 là Nam, còn lại là Nữ)
-    const isMale = parseInt(gender) === 1;
-    
-    const engine = new TuViEngine();
-    
-    // 3. Dựng khung
-    const menhIdx = engine.setupPalaces(lunar.getMonth(), lunar.getTimeZhiIndex());
-    
-    // 4. CHỈ GỌI BUILD 1 LẦN DUY NHẤT VỚI ĐẦY ĐỦ THAM SỐ
-    engine.build(lunar, menhIdx, isMale);
+// Đây là đường link tới xưởng Data Python của mày
+const PYTHON_API_URL = 'http://127.0.0.1:8000/api/lap-la-so';
 
-        // 3. Trả về cấu trúc phẳng để React bốc cho dễ
-    res.json({
-        fullName: name || "Ẩn danh",
-        solarDate: solar.toFullString(),
-        lunarDate: lunar.toFullString(),
-        conGiap: chiNam, // Đã dịch sang tiếng Việt
-        // Đưa canChi ra ngoài cùng luôn
-        canChi: {
-            year: canNam + " " + chiNam,
-            month: lunar.getMonthInGanZhi() + " (Dịch sau)",
-            day: lunar.getDayInGanZhi() + " (Dịch sau)",
-            hour: lunar.getTimeZhi() + " (Dịch sau)"
-        },
-        // Dữ liệu từ Engine
-        cuc: engine.cuc,
-        palaces: engine.getLaSo().palaces
-    });
+app.get('/api/astrology/info', async (req, res) => {
+    try {
+        // Frontend truyền vào Ngày Tháng Năm Giờ Dương Lịch và Giới tính (1: Nam, 0: Nữ)
+        let { year, month, day, hour, gender } = req.query;
+
+        // 1. Validate Input
+        if (!year || !month || !day || !hour || gender === undefined) {
+            return res.status(400).json({ error: "Gửi thiếu params rồi thằng lỏi!" });
+        }
+
+        // 2. Lấy Index giờ Âm Lịch (Tý = 0, Sửu = 1...) dùng lunar-javascript
+        const solar = Solar.fromYmdHms(parseInt(year), parseInt(month), parseInt(day), parseInt(hour), 0, 0);
+        const lunar = solar.getLunar();
+        
+        // Thằng Python đòi Giờ Tý = 1, Sửu = 2... nên tao phải + 1
+        const pythonGio = lunar.getTimeZhiIndex() + 1; 
+        
+        // Thằng Python đòi Giới Tính Nam = 1, Nữ = -1
+        const pythonGioiTinh = parseInt(gender) === 1 ? 1 : -1;
+
+        // 3. Bắn lệnh qua Server Python lấy lá số
+        const response = await axios.get(PYTHON_API_URL, {
+            params: {
+                nam: parseInt(year),
+                thang: parseInt(month),
+                ngay: parseInt(day),
+                gio: pythonGio,
+                gioi_tinh: pythonGioiTinh
+            }
+        });
+
+        // 4. Nếu Python trả về lỗi (do logic bên đó)
+        if (response.data.status === "error") {
+            throw new Error(response.data.message || "Lỗi mẹ nó từ lõi Python rồi");
+        }
+
+        // 5. Trả Lá Số xịn sò về cho Frontend
+        return res.json({
+            status: "success",
+            message: "Lá số Tử Vi lấy thành công từ Core Python",
+            lunarDateInfo: {
+                canChiNam: lunar.getYearInGanZhi(),
+                canChiThang: lunar.getMonthInGanZhi(),
+                canChiNgay: lunar.getDayInGanZhi(),
+                canChiGio: lunar.getTimeInGanZhi()
+            },
+            laso: response.data.data // Cục JSON Python vừa nhả ra
+        });
+
+    } catch (error) {
+        console.error("Lỗi mẹ nó rồi:", error.message);
+        res.status(500).json({ 
+            error: "Hệ thống Tử Vi đang bảo trì", 
+            details: error.message 
+        });
+    }
 });
 
-app.listen(3001, () => console.log("🚀 TuVi Engine v3.0 - Đã FIX lỗi và chạy ngon!"));
+const PORT = 3001;
+app.listen(PORT, () => {
+    console.log(`✅ API Node.js Gateway đang chạy ở cổng ${PORT}!`);
+    console.log(`👉 Mở link này để test: http://localhost:3001/api/astrology/info?year=1995&month=5&day=15&hour=6&gender=1`);
+});

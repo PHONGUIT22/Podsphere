@@ -26,12 +26,13 @@ function anSaoCanNam(engine, canNam) {
     engine.addStar(vietIdx, "THIÊN VIỆT");
 
     // 3. AN TRIỆT (Sao phá phách nhất lá số, án ngữ 2 cung)
+  // Thay đổi bảng trietTable
     const trietTable = {
         "Giáp": [8, 9], "Kỷ": [8, 9],
         "Ất": [6, 7], "Canh": [6, 7],
         "Bính": [4, 5], "Tân": [4, 5],
         "Đinh": [2, 3], "Nhâm": [2, 3],
-        "Mậu": [0, 11], "Quý": [0, 11]
+        "Mậu": [0, 1], "Quý": [0, 1]  // FIX LỖI Ở ĐÂY: Tý(0) Sửu(1)
     };
     
     let trietPos = trietTable[canNam];

@@ -22,7 +22,7 @@ public class AstrologyService : IAstrologyService
         int gender = isMale ? 1 : 0;
 
         // Cập nhật URL: Thêm tham số &gender vào cuối
-        var url = $"api/astrology/tuvi-pro?year={birthDate.Year}&month={birthDate.Month}&day={birthDate.Day}&hour={hour}&gender={gender}";
+        var url = $"api/astrology/info?year={birthDate.Year}&month={birthDate.Month}&day={birthDate.Day}&hour={hour}&gender={(isMale ? 1 : 0)}";
 
         var response = await client.GetAsync(url);
 
