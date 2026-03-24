@@ -8,46 +8,42 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Đây là đường link tới xưởng Data Python của mày
 const PYTHON_API_URL = 'http://127.0.0.1:8000/api/lap-la-so';
 
 app.get('/api/astrology/info', async (req, res) => {
     try {
-        // Frontend truyền vào Ngày Tháng Năm Giờ Dương Lịch và Giới tính (1: Nam, 0: Nữ)
-        let { year, month, day, hour, gender } = req.query;
+        // Nhận thêm `viewYear` từ request
+        let { year, month, day, hour, gender, viewYear } = req.query;
 
-        // 1. Validate Input
         if (!year || !month || !day || !hour || gender === undefined) {
             return res.status(400).json({ error: "Gửi thiếu params rồi thằng lỏi!" });
         }
 
-        // 2. Lấy Index giờ Âm Lịch (Tý = 0, Sửu = 1...) dùng lunar-javascript
+        // Lấy mặc định năm nay nếu Frontend không gửi viewYear
+        const namXemHan = viewYear ? parseInt(viewYear) : new Date().getFullYear();
+
         const solar = Solar.fromYmdHms(parseInt(year), parseInt(month), parseInt(day), parseInt(hour), 0, 0);
         const lunar = solar.getLunar();
         
-        // Thằng Python đòi Giờ Tý = 1, Sửu = 2... nên tao phải + 1
         const pythonGio = lunar.getTimeZhiIndex() + 1; 
-        
-        // Thằng Python đòi Giới Tính Nam = 1, Nữ = -1
         const pythonGioiTinh = parseInt(gender) === 1 ? 1 : -1;
 
-        // 3. Bắn lệnh qua Server Python lấy lá số
+        // Bắn lệnh qua Server Python lấy lá số, KÈM NAM_XEM
         const response = await axios.get(PYTHON_API_URL, {
             params: {
                 nam: parseInt(year),
                 thang: parseInt(month),
                 ngay: parseInt(day),
                 gio: pythonGio,
-                gioi_tinh: pythonGioiTinh
+                gioi_tinh: pythonGioiTinh,
+                nam_xem: namXemHan // TRUYỀN NĂM XEM CHO PYTHON
             }
         });
 
-        // 4. Nếu Python trả về lỗi (do logic bên đó)
         if (response.data.status === "error") {
             throw new Error(response.data.message || "Lỗi mẹ nó từ lõi Python rồi");
         }
 
-        // 5. Trả Lá Số xịn sò về cho Frontend
         return res.json({
             status: "success",
             message: "Lá số Tử Vi lấy thành công từ Core Python",
@@ -57,7 +53,7 @@ app.get('/api/astrology/info', async (req, res) => {
                 canChiNgay: lunar.getDayInGanZhi(),
                 canChiGio: lunar.getTimeInGanZhi()
             },
-            laso: response.data.data // Cục JSON Python vừa nhả ra
+            laso: response.data.data 
         });
 
     } catch (error) {
@@ -72,5 +68,4 @@ app.get('/api/astrology/info', async (req, res) => {
 const PORT = 3001;
 app.listen(PORT, () => {
     console.log(`✅ API Node.js Gateway đang chạy ở cổng ${PORT}!`);
-    console.log(`👉 Mở link này để test: http://localhost:3001/api/astrology/info?year=1995&month=5&day=15&hour=6&gender=1`);
 });
