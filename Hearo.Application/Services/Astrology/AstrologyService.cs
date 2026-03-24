@@ -38,4 +38,24 @@ public class AstrologyService : IAstrologyService
         // Nếu lỗi, bạn có thể log lỗi ở đây hoặc trả về chuỗi rỗng
         return string.Empty; 
     }
+    // Thêm vào IAstrologyService.cs trước nếu có interface
+    public async Task<string> GetBaziDataAsync(DateTime birthDate, int hour, bool isMale)
+    {
+        var client = _httpClientFactory.CreateClient("AstrologyClient");
+        int gender = isMale ? 1 : 0;
+
+        // Gọi tới endpoint /api/astrology/bazi của Node.js
+        var url = $"api/astrology/bazi?year={birthDate.Year}" +
+                $"&month={birthDate.Month}" +
+                $"&day={birthDate.Day}" +
+                $"&hour={hour}" +
+                $"&gender={gender}";
+
+        var response = await client.GetAsync(url);
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadAsStringAsync();
+        }
+        return string.Empty;
+    }
 }

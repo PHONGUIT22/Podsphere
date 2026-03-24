@@ -60,9 +60,19 @@ public class AstrologyController : ControllerBase
             viewYear = request.ViewYear // Trả về để Frontend biết đang xem năm nào
         });
     }
-}
+    [HttpPost("get-bazi-only")]
+    public async Task<IActionResult> GetBaziOnly([FromBody] BaziRequest request)
+    {
+        var jsonData = await _astrologyService.GetBaziDataAsync(request.BirthDate, request.Hour, request.IsMale);
+        
+        if (string.IsNullOrEmpty(jsonData)) return BadRequest("Không lấy được dữ liệu Bát Tự");
 
-// CẬP NHẬT RECORD: Thêm ViewYear vào cuối
+        return Ok(jsonData); // Trả về JSON từ Node.js
+    }
+
+}
+public record BaziRequest(DateTime BirthDate, int Hour, bool IsMale);
+
 public record CreateProfileRequest(
     string FullName, 
     DateTime BirthDate, 

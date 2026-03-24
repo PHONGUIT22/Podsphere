@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const { Solar } = require('lunar-javascript');
+const { getBaziData } = require('./baziService'); // Import service vừa tạo
 
 const app = express();
 app.use(cors());
@@ -64,7 +65,32 @@ app.get('/api/astrology/info', async (req, res) => {
         });
     }
 });
+// --- ENDPOINT BÁT TỰ (MỚI) ---
+app.get('/api/astrology/bazi', (req, res) => {
+    try {
+        const { year, month, day, hour, gender } = req.query;
 
+        if (!year || !month || !day || !hour) {
+            return res.status(400).json({ error: "Thiếu tham số Bát Tự" });
+        }
+
+        const baziData = getBaziData(
+            parseInt(year), 
+            parseInt(month), 
+            parseInt(day), 
+            parseInt(hour), 
+            parseInt(gender)
+        );
+
+        return res.json({
+            status: "success",
+            data: baziData
+        });
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 const PORT = 3001;
 app.listen(PORT, () => {
     console.log(`✅ API Node.js Gateway đang chạy ở cổng ${PORT}!`);
