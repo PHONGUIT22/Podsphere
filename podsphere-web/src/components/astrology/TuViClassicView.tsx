@@ -44,6 +44,37 @@ Object.entries(STAR_GROUPS).forEach(([color, stars]) => {
     stars.forEach(star => STAR_COLORS[star.toLowerCase()] = color);
 });
 
+// ==========================================================
+// 2. MÀU SẮC NGŨ HÀNH CHO CAN - CHI
+// ==========================================================
+const ELEMENT_COLORS: Record<string, string> = {
+    WOOD: "#008000",   // Xanh lá (Mộc)
+    FIRE: "#cc0000",   // Đỏ (Hỏa)
+    EARTH: "#c27c0e",  // Vàng đất (Thổ)
+    METAL: "#666666",  // Xám (Kim)
+    WATER: "#000000",  // Đen (Thủy)
+};
+
+// Hàm lấy màu theo tên Địa Chi
+const getChiColor = (chi: string) => {
+    if (["Dần", "Mão"].includes(chi)) return ELEMENT_COLORS.WOOD;
+    if (["Tỵ", "Ngọ"].includes(chi)) return ELEMENT_COLORS.FIRE;
+    if (["Thân", "Dậu"].includes(chi)) return ELEMENT_COLORS.METAL;
+    if (["Hợi", "Tý"].includes(chi)) return ELEMENT_COLORS.WATER;
+    if (["Thìn", "Tuất", "Sửu", "Mùi"].includes(chi)) return ELEMENT_COLORS.EARTH;
+    return "#000000";
+};
+
+// Hàm lấy màu theo Thiên Can (dựa vào index 0-9)
+const getCanColor = (index: number) => {
+    if ([0, 1].includes(index)) return ELEMENT_COLORS.WOOD; // Giáp, Ất
+    if ([2, 3].includes(index)) return ELEMENT_COLORS.FIRE; // Bính, Đinh
+    if ([4, 5].includes(index)) return ELEMENT_COLORS.EARTH; // Mậu, Kỷ
+    if ([6, 7].includes(index)) return ELEMENT_COLORS.METAL; // Canh, Tân
+    if ([8, 9].includes(index)) return ELEMENT_COLORS.WATER; // Nhâm, Quý
+    return "#000000";
+};
+
 const getStarColorCode = (starName: string) => {
     if (!starName) return "#000000"; 
     const lowerName = starName.toLowerCase();
@@ -71,34 +102,60 @@ export const TuViClassicView = ({ data }: { data: any }) => {
     const gridOrder = [6, 7, 8, 9, 5, -1, -1, 10, 4, -1, -1, 11, 3, 2, 1, 12];
     
     // ==========================================================
+    // 🐯 HÀM TÍNH THIÊN CAN CHO TỪNG CUNG (NGŨ HỔ ĐỘN CẢI TIẾN)
+    // ==========================================================
+    const getPalaceCanInfo = (palace: any) => {
+        try {
+            const canViet = ["Giáp", "Ất", "Bính", "Đinh", "Mậu", "Kỷ", "Canh", "Tân", "Nhâm", "Quý"];
+            const canHan = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
+            const canChiNamInfo = data?.lunarDateInfo?.canChiNam || "";
+            if (!canChiNamInfo) return { name: "", color: "#000000" };
+            
+            const firstChar = canChiNamInfo.charAt(0);
+            let canNamIdx = canHan.indexOf(firstChar);
+            if (canNamIdx === -1) {
+                canNamIdx = canViet.findIndex(c => firstChar.toLowerCase().startsWith(c.charAt(0).toLowerCase()));
+            }
+            if (canNamIdx === -1) return { name: "", color: "#000000" };
+
+            const startCanForDanMap: Record<number, number> = { 0: 2, 5: 2, 1: 4, 6: 4, 2: 6, 7: 6, 3: 8, 8: 8, 4: 0, 9: 0 };
+            const startCanIdx = startCanForDanMap[canNamIdx];
+            let offset = palace.id_cung - 3;
+            if (offset < 0) offset += 12; 
+            
+            const currentCanIdx = (startCanIdx + offset) % 10;
+            return {
+                name: `${canViet[currentCanIdx].charAt(0)}.`,
+                color: getCanColor(currentCanIdx)
+            };
+        } catch (e) {
+            return { name: "", color: "#000000" };
+        }
+    };
+
+    // ==========================================================
     // 🧠 HÀM TÍNH NGUYỆT VẬN
     // Quy tắc: Từ cung Tiểu Vận năm xem, nghịch tháng thuận giờ
     // ==========================================================
     const getNguyetVanMap = () => {
-        // 1. Lấy Chi của năm xem (VD: "Ất Tỵ (2025)" -> lấy "Tỵ")
         const viewYearStr = data.laso?.thong_tin?.am_lich?.split(' ')[1] || ""; 
         const yearChi = viewYearStr.replace(/[\(\)]/g, "").slice(-2, -1) || "Tỵ"; 
         
-        // 2. Tìm cung có Tiểu Vận trùng với Chi năm xem
         const startPalace = palacesArray.find(p => p.tieu_han === yearChi);
         if (!startPalace) return {};
 
-        // 3. Lấy tháng sinh và giờ sinh của đương số
         const amLich = data.laso?.thong_tin?.am_lich || ""; 
         const birthMonth = parseInt(amLich.split('/')[1] || "1");
         
         const gioSinhStr = data.laso?.thong_tin?.gio_sinh?.split(' ')[1] || "Tý";
         const birthHourIdx = CHI_INDEX[gioSinhStr] || 1;
 
-        // 4. Bắt đầu tính: Nghịch tháng
         let pos = startPalace.id_cung - (birthMonth - 1);
         while (pos <= 0) pos += 12;
 
-        // 5. Tiếp tục: Thuận giờ -> Đây là vị trí Tháng 1
         let month1Id = (pos + (birthHourIdx - 1));
         while (month1Id > 12) month1Id -= 12;
 
-        // 6. Tạo Map PalaceID -> Số tháng (Đi thuận 12 tháng)
         const monthMap: Record<number, number> = {};
         for (let m = 1; m <= 12; m++) {
             let currentPalaceId = (month1Id + (m - 1));
@@ -123,12 +180,10 @@ export const TuViClassicView = ({ data }: { data: any }) => {
         
         let x, y;
         
-        // Trục X: Chạm mép Trái (x=100) hoặc Phải (x=300) của Thiên Bàn
         if (col === 0) x = 100;
         else if (col === 3) x = 300;
         else x = col * 100 + 50; 
 
-        // Trục Y: Chạm mép Trên (y=100) hoặc Dưới (y=300) của Thiên Bàn
         if (row === 0) y = 100;
         else if (row === 3) y = 300;
         else y = row * 100 + 50; 
@@ -184,7 +239,7 @@ export const TuViClassicView = ({ data }: { data: any }) => {
                                             </p>
                                             <p className="flex justify-between">
                                                 <span className="text-[#444444] font-medium">Năm sinh:</span> 
-                                                <span className="text-[#003366] font-bold">{data.lunarDateInfo?.canChiNam}</span>
+                                                <span className="text-[#003366] font-bold">{data.lunarDateInfo?.canChiNam || data.laso?.thong_tin?.nam_sinh}</span>
                                             </p>
                                             <p className="flex justify-between">
                                                 <span className="text-[#444444] font-medium">Tháng:</span> 
@@ -267,19 +322,28 @@ export const TuViClassicView = ({ data }: { data: any }) => {
 
                         const isMenh = palace.ten_cung === "Mệnh";
                         const monthNum = nguyetVanMap[palace.id_cung];
+                        
+                        // Lấy thông tin Tên Can và Màu cho Can, Chi
+                        const canInfo = getPalaceCanInfo(palace);
+                        const chiColor = getChiColor(palace.chi_cung);
 
                         return (
                             <div key={i} className={`relative flex flex-col h-[260px] border border-black p-1.5 ${isMenh ? 'bg-[#f4efe1]' : 'bg-transparent'}`}>
                                 
-                                {/* HEADER CUNG */}
+                               {/* HEADER CUNG: Sử dụng Can Chi với màu Ngũ Hành */}
                                 <div className="flex justify-between items-start leading-none mb-3 z-10">
-                                    <span className={`text-[14px] font-black ${isMenh ? 'text-[#cc0000]' : 'text-[#cc0000]'}`}>{palace.chi_cung}</span>
+                                    <div className="flex text-[14px] font-black">
+                                        <span style={{ color: canInfo.color }}>{canInfo.name}</span>
+                                        <span style={{ color: chiColor }}>{palace.chi_cung}</span>
+                                    </div>
+                                    
                                     <div className="flex flex-col items-center">
                                         <span className={`text-[15px] font-black uppercase tracking-wide ${isMenh ? 'text-[#cc0000]' : 'text-[#cc0000]'}`}>
                                             {palace.ten_cung}
                                         </span>
                                         {palace.cung_than && <span className="text-[11px] font-black text-gray-600 leading-none mt-0.5">&lt;THÂN&gt;</span>}
                                     </div>
+                                    
                                     <span className="text-[14px] font-black text-black">{palace.dai_han}</span>
                                 </div>
 
@@ -314,16 +378,16 @@ export const TuViClassicView = ({ data }: { data: any }) => {
                                     </div>
                                 </div>
 
-                                {/* FOOTER */}
+                                {/* FOOTER: Hiển thị Can Chi ở góc dưới trái với màu Ngũ Hành */}
                                 <div className="mt-auto pt-1 flex justify-between items-end border-t border-gray-300 z-10">
-                                    <span className="text-[13px] text-gray-500 font-bold italic">
-                                        {palace.chi_cung}
-                                    </span>
+                                    <div className="text-[13px] font-bold text-gray-800">
+                                {palace.tieu_han}
+                                     </div>
+                                    
                                     <span style={{ color: getStarColorCode(trangSinhStar?.ten_sao || "") }} className="text-[14px] font-black uppercase tracking-wide">
                                         {trangSinhStar?.ten_sao || ""}
                                     </span>
                                     
-                                    {/* HIỂN THỊ SỐ THÁNG NGUYỆT VẬN Ở ĐÂY */}
                                     <span className="text-[13px] text-[#003366] font-black">
                                         {monthNum ? `T.${monthNum}` : `Tháng`}
                                     </span>
