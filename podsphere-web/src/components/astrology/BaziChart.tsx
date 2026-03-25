@@ -2,11 +2,17 @@
 import React from 'react';
 
 const WUXING_COLORS: Record<string, string> = {
-  'Kim': 'text-gray-400',
-  'Mộc': 'text-green-600',
-  'Thủy': 'text-blue-600',
-  'Hỏa': 'text-red-600',
-  'Thổ': 'text-yellow-600',
+  'Kim': 'text-[#71717a]', 
+  'Mộc': 'text-[#16a34a]', 
+  'Thủy': 'text-[#2563eb]', 
+  'Hỏa': 'text-[#dc2626]', 
+  'Thổ': 'text-[#ca8a04]', 
+};
+
+const CHI_ELEMENTS: Record<string, string> = {
+  '子': 'Thủy', '丑': 'Thổ', '寅': 'Mộc', '卯': 'Mộc',
+  '辰': 'Thổ', '巳': 'Hỏa', '午': 'Hỏa', '未': 'Thổ',
+  '申': 'Kim', '酉': 'Kim', '戌': 'Thổ', '亥': 'Thủy'
 };
 
 const TRANSLATE: Record<string, string> = {
@@ -24,128 +30,251 @@ const SHORTEN_TEN_GOD: Record<string, string> = {
   'NHẬT CHỦ': 'NHẬT CHỦ'
 };
 
+const GridRow = ({ label, children, bg = "bg-white" }: any) => (
+  <div className={`grid grid-cols-[90px_1fr_1fr_1fr_1fr] md:grid-cols-[120px_1fr_1fr_1fr_1fr] ${bg} w-full border-b border-slate-300`}>
+    <div className="flex items-center justify-center border-r border-slate-300 bg-slate-100 p-2 text-center text-[10px] md:text-[11px] font-black text-slate-700 uppercase tracking-tighter">
+      {label}
+    </div>
+    {children}
+  </div>
+);
+
+const DataCell = ({ children, className = "" }: any) => (
+  <div className={`flex flex-col items-center justify-center border-r border-slate-300 last:border-r-0 p-2 text-center ${className} min-h-[50px]`}>
+    {children}
+  </div>
+);
+
 export const BaziChart = ({ data }: { data: any }) => {
   if (!data || !data.pillars) return null;
 
-  const order = ['year', 'month', 'day', 'hour'];
+  const order = ['year', 'month', 'day', 'hour'] as const;
+  const solarLabels = ['Năm', 'Tháng', 'Ngày', 'Giờ'];
   const solarData = [data.solar.year, data.solar.month, data.solar.day, data.solar.hour];
 
   return (
-    <div className="space-y-10 p-4 bg-gray-50/50 rounded-xl">
+    <div className="w-full space-y-10 p-2 md:p-6 bg-white font-sans text-slate-900">
       
-      {/* SECTION 1: BẢNG BÁT TỰ CHÍNH (Giữ nguyên logic cũ) */}
-      <div className="w-full max-w-4xl mx-auto overflow-hidden border-t border-l border-gray-300 bg-white shadow-md font-sans rounded-sm">
-        <div className="grid grid-cols-[100px_1fr_1fr_1fr_1fr]">
-            <div className="flex items-center justify-center border-b border-r border-gray-300 bg-gray-50 p-2 text-center text-[11px] font-bold text-blue-900 uppercase min-h-[50px]">Dương<br/>Lịch</div>
-            {solarData.map((val, i) => (
-                <div key={i} className="flex flex-col items-center justify-center border-b border-r border-gray-300 p-2 text-center text-sm font-bold text-gray-800 min-h-[50px]">{val}</div>
-            ))}
+      {/* SECTION 1: BÁT TỰ CHÍNH */}
+      <div className="max-w-6xl mx-auto shadow-2xl rounded-lg overflow-hidden border-2 border-slate-800">
+        <GridRow label="Dương Lịch">
+          {solarData.map((val, i) => (
+            <DataCell key={i} className="font-bold text-slate-600 text-sm">{val} <span className="text-[10px] font-normal">{solarLabels[i]}</span></DataCell>
+          ))}
+        </GridRow>
 
-            <div className="flex items-center justify-center border-b border-r border-gray-300 bg-gray-50 p-2 text-center text-[11px] font-bold text-blue-900 uppercase min-h-[50px]">Chủ<br/>Tinh</div>
-            {order.map((key) => (
-                <div key={key} className="flex flex-col items-center justify-center border-b border-r border-gray-300 p-2 text-center text-[12px] font-medium text-gray-700 min-h-[50px]">{SHORTEN_TEN_GOD[data.pillars[key].tenGodGan] || data.pillars[key].tenGodGan}</div>
-            ))}
+        <GridRow label="Chủ Tinh" bg="bg-indigo-50/30">
+          {order.map((key) => (
+            <DataCell key={key} className="text-xs font-black text-indigo-700 uppercase">
+              {SHORTEN_TEN_GOD[data.pillars[key].tenGodGan] || data.pillars[key].tenGodGan}
+            </DataCell>
+          ))}
+        </GridRow>
 
-            <div className="flex items-center justify-center border-b border-r border-gray-300 bg-gray-50 p-2 text-center text-[11px] font-bold text-blue-900 uppercase min-h-[50px]">Bát Tự</div>
-            {order.map((key) => {
-                const p = data.pillars[key];
-                return (
-                    <div key={key} className="flex flex-col items-center justify-center border-b border-r border-gray-300 p-2 text-center py-4 min-h-[50px]">
-                        <span className={`text-xl font-bold ${WUXING_COLORS[p.element]}`}>{TRANSLATE[p.gan]}</span>
-                        <span className={`text-xl font-bold ${WUXING_COLORS[p.hiddenGan[0]?.element]}`}>{TRANSLATE[p.chi]}</span>
-                    </div>
-                )
-            })}
+        <GridRow label="Bát Tự">
+          {order.map((key) => {
+            const p = data.pillars[key];
+            return (
+              <DataCell key={key} className="py-4">
+                <span className={`text-2xl md:text-3xl font-black leading-none mb-1 ${WUXING_COLORS[p.element]}`}>{TRANSLATE[p.gan]}</span>
+                <span className={`text-2xl md:text-3xl font-black leading-none ${WUXING_COLORS[p.hiddenGan[0]?.element]}`}>{TRANSLATE[p.chi]}</span>
+              </DataCell>
+            )
+          })}
+        </GridRow>
 
-            <div className="flex items-center justify-center border-b border-r border-gray-300 bg-gray-50 p-2 text-center text-[11px] font-bold text-blue-900 uppercase min-h-[50px]">Tàng Ẩn</div>
-            {order.map((key) => (
-                <div key={key} className="flex flex-col items-center justify-center border-b border-r border-gray-300 p-2 text-center min-h-[50px]">
-                    <div className="flex gap-2 justify-center">
-                        {data.pillars[key].hiddenGan.map((hg: any, i: number) => (
-                            <span key={i} className={`text-[11px] font-bold ${WUXING_COLORS[hg.element]}`}>{TRANSLATE[hg.name]}</span>
-                        ))}
-                    </div>
-                </div>
-            ))}
+        <GridRow label="Tàng Ẩn">
+          {order.map((key) => (
+            <DataCell key={key} className="flex-row flex-wrap gap-1 md:gap-2">
+              {data.pillars[key].hiddenGan.map((hg: any, i: number) => (
+                <span key={i} className={`text-[11px] md:text-xs font-black ${WUXING_COLORS[hg.element]}`}>{TRANSLATE[hg.name]}</span>
+              ))}
+            </DataCell>
+          ))}
+        </GridRow>
 
-            <div className="flex items-center justify-center border-b border-r border-gray-300 bg-gray-50 p-2 text-center text-[11px] font-bold text-blue-900 uppercase min-h-[50px]">Phó Tinh</div>
-            {order.map((key) => (
-                <div key={key} className="flex flex-col items-center justify-center border-b border-r border-gray-300 p-2 text-center min-h-[50px]">
-                    <div className="flex gap-1 justify-center">
-                        {data.pillars[key].hiddenGan.map((hg: any, i: number) => (
-                            <span key={i} className="text-[9px] text-gray-500">{SHORTEN_TEN_GOD[hg.tenGod] || hg.tenGod}</span>
-                        ))}
-                    </div>
-                </div>
-            ))}
+        <GridRow label="Phó Tinh" bg="bg-slate-50">
+          {order.map((key) => (
+            <DataCell key={key} className="flex-row flex-wrap gap-1">
+              {data.pillars[key].hiddenGan.map((hg: any, i: number) => (
+                <span key={i} className="text-[9px] md:text-[10px] text-slate-500 font-bold italic">({SHORTEN_TEN_GOD[hg.tenGod] || hg.tenGod})</span>
+              ))}
+            </DataCell>
+          ))}
+        </GridRow>
 
-            <div className="flex items-center justify-center border-b border-r border-gray-300 bg-gray-50 p-2 text-center text-[11px] font-bold text-blue-900 uppercase min-h-[50px]">Trường Sinh</div>
-            {order.map((key) => (
-                <div key={key} className="flex flex-col items-center justify-center border-b border-r border-gray-300 p-2 text-center text-xs text-gray-700 min-h-[50px]">{data.pillars[key].truongSinh}</div>
-            ))}
+        <GridRow label="Trường Sinh">
+          {order.map((key) => (
+            <DataCell key={key} className="text-[10px] font-bold text-slate-500 uppercase italic">{data.pillars[key].truongSinh}</DataCell>
+          ))}
+        </GridRow>
 
-            <div className="flex items-center justify-center border-b border-r border-gray-300 bg-gray-50 p-2 text-center text-[11px] font-bold text-blue-900 uppercase min-h-[50px]">Nạp Âm</div>
-            {order.map((key) => (
-                <div key={key} className="flex flex-col items-center justify-center border-b border-r border-gray-300 p-2 text-center text-[10px] text-gray-600 leading-tight min-h-[50px]">{data.pillars[key].napAm}</div>
-            ))}
-        </div>
+        <GridRow label="Nạp Âm" bg="bg-slate-50">
+          {order.map((key) => (
+            <DataCell key={key} className="text-[10px] md:text-[11px] font-bold text-slate-600 leading-tight px-1">{data.pillars[key].napAm}</DataCell>
+          ))}
+        </GridRow>
       </div>
 
-      {/* SECTION 2: BẢNG ĐẠI VẬN (SỬA LẠI ĐỂ KHÔNG BỊ LỆCH) */}
-      <div className="w-full max-w-4xl mx-auto">
-        <div className="flex justify-between items-end mb-3">
-          <h3 className="text-blue-900 font-black text-base uppercase tracking-widest border-l-4 border-blue-900 pl-3">Tiểu vận & Đại vận</h3>
-          <span className="text-[11px] font-bold text-gray-500 italic bg-gray-200 px-3 py-1 rounded-full">Khởi vận: {data.startAgeInfo}</span>
+      {/* SECTION BỔ SUNG: BẢNG THẦN SÁT NGUYÊN CỤC */}
+      {data.extraInfo && (
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row border-2 border-slate-900 rounded-sm overflow-hidden text-sm bg-white shadow-lg">
+          
+          {/* Cột trái: Thông tin cung */}
+          <div className="flex flex-col w-full md:w-[30%] border-b-2 md:border-b-0 md:border-r-2 border-slate-900">
+            <div className="flex border-b border-slate-300 min-h-[44px]">
+              <div className="w-[100px] flex items-center justify-center font-black text-[11px] text-blue-900 bg-slate-100 border-r border-slate-300">MỆNH CUNG</div>
+              <div className="flex-1 flex flex-col items-center justify-center text-[13px] font-bold text-slate-800">
+                <span>{data.extraInfo.menhCung || '-'}</span>
+              </div>
+            </div>
+            <div className="flex border-b border-slate-300 min-h-[44px]">
+              <div className="w-[100px] flex items-center justify-center font-black text-[11px] text-blue-900 bg-slate-100 border-r border-slate-300 text-center">THAI NGUYÊN</div>
+              <div className="flex-1 flex items-center justify-center text-[13px] font-bold text-slate-800">
+                {data.extraInfo.thaiNguyen || '-'}
+              </div>
+            </div>
+            <div className="flex border-b border-slate-300 min-h-[44px]">
+              <div className="w-[100px] flex items-center justify-center font-black text-[11px] text-blue-900 bg-slate-100 border-r border-slate-300 text-center">NIÊN KHÔNG</div>
+              <div className="flex-1 flex items-center justify-center text-[13px] font-bold text-slate-800">
+                {data.extraInfo.nienKhong || '-'}
+              </div>
+            </div>
+            <div className="flex min-h-[44px]">
+              <div className="w-[100px] flex items-center justify-center font-black text-[11px] text-blue-900 bg-slate-100 border-r border-slate-300 text-center">NHẬT KHÔNG</div>
+              <div className="flex-1 flex items-center justify-center text-[13px] font-bold text-slate-800">
+                {data.extraInfo.nhatKhong || '-'}
+              </div>
+            </div>
+          </div>
+
+                    {/* Cột phải: Bảng Thần Sát (Cập nhật trong file BaziChart.tsx) */}
+          <div className="flex flex-col w-full md:w-[70%]">
+            <div className="text-center font-black text-[14px] bg-slate-50 py-2 border-b-2 border-slate-900 text-blue-900 uppercase">
+              Bảng Thần Sát Nguyên Cục
+            </div>
+            
+            <div className="grid grid-cols-4 bg-slate-100 text-center font-black border-b border-slate-300 text-blue-900 text-[11px] py-2">
+              <div>NIÊN THẦN</div>
+              <div className="border-l border-slate-300">NGUYỆT THẦN</div>
+              <div className="border-l border-slate-300">NHẬT THẦN</div>
+              <div className="border-l border-slate-300">THỜI THẦN</div>
+            </div>
+            
+            <div className="grid grid-cols-4 text-center bg-white flex-grow min-h-[120px]">
+              {['year', 'month', 'day', 'hour'].map((key, idx) => (
+                <div key={key} className={`p-2 flex flex-col gap-1 items-center justify-start ${idx > 0 ? 'border-l border-slate-300' : ''} text-[11px] md:text-[12px] font-medium text-slate-800 pt-3`}>
+                  {data.pillars[key].stars?.map((star: string, i: number) => (
+                    <span key={i} className="leading-tight px-1 py-0.5 bg-blue-50/50 rounded-sm w-full text-center">
+                      {star}
+                    </span>
+                  ))}
+                  {(!data.pillars[key].stars || data.pillars[key].stars.length === 0) && <span className="text-slate-300 italic">-</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SECTION 2: ĐẠI VẬN */}
+      <div className="max-w-7xl mx-auto space-y-4 pt-6">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 px-2">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-2 bg-slate-900"></div>
+            <h3 className="font-black text-xl uppercase tracking-tighter text-slate-900">Đại Vận</h3>
+          </div>
+          <div className="bg-slate-900 border-2 border-slate-900 px-6 py-1.5 shadow-lg shadow-slate-200">
+            <span className="text-white text-[12px] font-black uppercase tracking-widest">
+              Khởi vận: {data.startAgeInfo}
+            </span>
+          </div>
         </div>
 
-        {/* Thêm overflow-x-auto để cuộn ngang nếu bảng quá rộng */}
-        <div className="overflow-x-auto border-t border-l border-gray-300 bg-white shadow-md rounded-sm">
-          <div className="min-w-[800px]"> {/* Đảm bảo chiều rộng tối thiểu để không bị dồn chữ */}
-            
-            {/* Hàng 1: Thập Thần */}
-            <div className="flex">
-              <div className="w-[100px] flex-shrink-0 bg-gray-50 border-b border-r border-gray-300 p-2 text-[10px] font-black text-blue-900 text-center uppercase flex items-center justify-center">Chủ Tinh</div>
-              {data.majorCycles.map((mc: any, i: number) => (
-                <div key={i} className="flex-1 border-b border-r border-gray-300 p-2 text-center text-[11px] font-bold text-gray-500 flex items-center justify-center min-w-[70px]">
-                  {SHORTEN_TEN_GOD[mc.tenGod] || mc.tenGod}
-                </div>
-              ))}
-            </div>
+        <div className="w-full border-2 border-slate-900 bg-white shadow-2xl overflow-hidden rounded-sm">
+          {/* Hàng: Chủ Tinh */}
+          <div className="grid grid-cols-[70px_repeat(10,1fr)] md:grid-cols-[120px_repeat(10,1fr)] border-b border-slate-300">
+            <div className="bg-slate-100 border-r border-slate-900 p-2 text-[9px] md:text-[11px] font-black text-slate-700 uppercase flex items-center justify-center text-center leading-none">Chủ Tinh</div>
+            {data.majorCycles.map((mc: any, i: number) => (
+              <div key={i} className="border-r border-slate-300 last:border-r-0 p-2 text-center text-[9px] md:text-xs font-black text-indigo-600 flex items-center justify-center uppercase">
+                {SHORTEN_TEN_GOD[mc.tenGod] || mc.tenGod}
+              </div>
+            ))}
+          </div>
 
-            {/* Hàng 2: Can Chi Đại Vận */}
-            <div className="flex">
-              <div className="w-[100px] flex-shrink-0 bg-gray-50 border-b border-r border-gray-300 p-2 text-[10px] font-black text-blue-900 text-center uppercase flex items-center justify-center">Đại Vận</div>
-              {data.majorCycles.map((mc: any, i: number) => (
-                <div key={i} className="flex-1 border-b border-r border-gray-300 p-2 text-center flex flex-col justify-center py-3 min-w-[70px]">
-                  <span className={`text-base font-black leading-none ${WUXING_COLORS[mc.element]}`}>{TRANSLATE[mc.gan]}</span>
-                  <span className={`text-base font-black leading-none text-gray-800 mt-1`}>{TRANSLATE[mc.chi]}</span>
-                </div>
-              ))}
-            </div>
+          {/* Hàng: Đại Vận */}
+          <div className="grid grid-cols-[70px_repeat(10,1fr)] md:grid-cols-[120px_repeat(10,1fr)] border-b border-slate-300">
+            <div className="bg-slate-100 border-r border-slate-900 p-2 text-[9px] md:text-[11px] font-black text-slate-700 uppercase flex items-center justify-center text-center">Đại Vận</div>
+            {data.majorCycles.map((mc: any, i: number) => (
+              <div key={i} className="border-r border-slate-300 last:border-r-0 py-3 md:py-4 text-center">
+                <div className={`text-sm md:text-lg font-black leading-none ${WUXING_COLORS[mc.element]}`}>{TRANSLATE[mc.gan]}</div>
+                <div className={`text-sm md:text-lg font-black leading-none mt-1 ${WUXING_COLORS[CHI_ELEMENTS[mc.chi]]}`}>{TRANSLATE[mc.chi]}</div>
+              </div>
+            ))}
+          </div>
 
-            {/* Hàng 3: Số tuổi */}
-            <div className="flex">
-              <div className="w-[100px] flex-shrink-0 bg-gray-50 border-b border-r border-gray-300 p-2 text-[10px] font-black text-blue-900 text-center uppercase flex items-center justify-center">Số Tuổi</div>
-              {data.majorCycles.map((mc: any, i: number) => (
-                <div key={i} className="flex-1 border-b border-r border-gray-300 p-2 text-center text-[12px] font-black text-red-600 bg-red-50/20 flex items-center justify-center min-w-[70px]">
-                  {mc.startAge}
-                </div>
-              ))}
-            </div>
+          {/* Hàng: Số Tuổi */}
+          <div className="grid grid-cols-[70px_repeat(10,1fr)] md:grid-cols-[120px_repeat(10,1fr)] border-b border-slate-300 bg-red-50/50">
+            <div className="bg-slate-100 border-r border-slate-900 p-2 text-[9px] md:text-[11px] font-black text-slate-700 uppercase flex items-center justify-center text-center leading-none">Số Tuổi</div>
+            {data.majorCycles.map((mc: any, i: number) => (
+              <div key={i} className="border-r border-slate-300 last:border-r-0 p-2 text-center text-[10px] md:text-[13px] font-black text-red-600 flex items-center justify-center">
+                {mc.ageRange}
+              </div>
+            ))}
+          </div>
 
-            {/* Hàng 4: Năm bắt đầu */}
-            <div className="flex">
-              <div className="w-[100px] flex-shrink-0 bg-gray-50 border-b border-r border-gray-300 p-2 text-[10px] font-black text-blue-900 text-center uppercase flex items-center justify-center">Năm</div>
-              {data.majorCycles.map((mc: any, i: number) => (
-                <div key={i} className="flex-1 border-b border-r border-gray-300 p-2 text-center text-[10px] text-gray-400 font-medium italic flex items-center justify-center min-w-[70px]">
-                  {mc.startYear}
-                </div>
-              ))}
-            </div>
-
+          {/* Hàng: Năm */}
+          <div className="grid grid-cols-[70px_repeat(10,1fr)] md:grid-cols-[120px_repeat(10,1fr)]">
+            <div className="bg-slate-100 border-r border-slate-900 p-2 text-[9px] md:text-[11px] font-black text-slate-700 uppercase flex items-center justify-center text-center">Năm</div>
+            {data.majorCycles.map((mc: any, i: number) => (
+              <div key={i} className="border-r border-slate-300 last:border-r-0 p-1 md:p-2 text-center flex flex-col justify-center">
+                <span className="text-[9px] md:text-[12px] font-black text-slate-800 leading-none">{mc.startYear}</span>
+                <span className="hidden md:block text-[9px] text-slate-400 font-bold mt-1 uppercase">đến {mc.endYear}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
+
+      {/* SECTION 3: BẢNG LƯU NIÊN (80 NĂM) */}
+      <div className="max-w-7xl mx-auto space-y-4 pt-6">
+        <div className="flex items-center gap-3 px-2">
+          <div className="h-8 w-2 bg-emerald-600"></div>
+          <h3 className="font-black text-xl uppercase tracking-tighter text-slate-900">Bảng Lưu Niên</h3>
+        </div>
+
+        <div className="w-full bg-slate-100 p-2 md:p-4 rounded-md space-y-6 shadow-inner border border-slate-300">
+          {data.annualCycles?.map((decade: any[], decadeIndex: number) => (
+            <div key={decadeIndex} className="border-2 border-slate-800 bg-white shadow-md overflow-hidden rounded-sm">
+              <div className="grid grid-cols-[70px_repeat(10,1fr)] md:grid-cols-[120px_repeat(10,1fr)] border-b border-slate-300 bg-slate-50">
+                <div className="bg-slate-200 border-r border-slate-800 p-2 text-[9px] md:text-[11px] font-black text-slate-700 uppercase flex items-center justify-center text-center">Năm</div>
+                {decade.map((ac: any, i: number) => (
+                  <div key={i} className="border-r border-slate-300 last:border-r-0 p-2 text-center text-[11px] md:text-sm font-black text-slate-800">{ac.year}</div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-[70px_repeat(10,1fr)] md:grid-cols-[120px_repeat(10,1fr)] border-b border-slate-300">
+                <div className="bg-slate-100 border-r border-slate-800 p-2 text-[9px] md:text-[11px] font-black text-slate-700 uppercase flex items-center justify-center text-center">Chủ Tinh</div>
+                {decade.map((ac: any, i: number) => (
+                  <div key={i} className="border-r border-slate-300 last:border-r-0 p-2 text-center text-[10px] md:text-xs font-bold text-indigo-600 uppercase">{SHORTEN_TEN_GOD[ac.tenGod] || ac.tenGod}</div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-[70px_repeat(10,1fr)] md:grid-cols-[120px_repeat(10,1fr)]">
+                <div className="bg-slate-100 border-r border-slate-800 p-2 text-[9px] md:text-[11px] font-black text-slate-700 uppercase flex items-center justify-center text-center">Lưu Niên</div>
+                {decade.map((ac: any, i: number) => (
+                  <div key={i} className="border-r border-slate-300 last:border-r-0 py-2 md:py-3 text-center">
+                    <div className={`text-sm md:text-lg font-black leading-none ${WUXING_COLORS[ac.element]}`}>{TRANSLATE[ac.gan]}</div>
+                    <div className={`text-sm md:text-lg font-black leading-none mt-1 ${WUXING_COLORS[CHI_ELEMENTS[ac.chi]]}`}>{TRANSLATE[ac.chi]}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-[10px] text-slate-500 font-medium px-2">* Lưu niên được tính từ tiết Lập Xuân của năm đó.</p>
+      </div>
+
     </div>
   );
 };
