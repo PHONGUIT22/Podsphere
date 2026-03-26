@@ -13,11 +13,13 @@ public class AstrologyController : ControllerBase
 {
     private readonly IAstrologyService _astrologyService;
     private readonly IApplicationDbContext _context;
+    private readonly IGeminiService _geminiService;
 
-    public AstrologyController(IAstrologyService astrologyService, IApplicationDbContext context)
+    public AstrologyController(IAstrologyService astrologyService, IApplicationDbContext context, IGeminiService geminiService)
     {
         _astrologyService = astrologyService;
         _context = context;
+        _geminiService = geminiService;
     }
 
     [Authorize]
@@ -60,14 +62,33 @@ public class AstrologyController : ControllerBase
             viewYear = request.ViewYear // Trả về để Frontend biết đang xem năm nào
         });
     }
-    [HttpPost("get-bazi-only")]
-    public async Task<IActionResult> GetBaziOnly([FromBody] BaziRequest request)
+    [HttpPost("get-bazi-with-ai-reading")]
+    public async Task<IActionResult> GetBaziWithAiReading([FromBody] BaziRequest request)
     {
-        var jsonData = await _astrologyService.GetBaziDataAsync(request.BirthDate, request.Hour, request.IsMale);
-        
-        if (string.IsNullOrEmpty(jsonData)) return BadRequest("Không lấy được dữ liệu Bát Tự");
+        try 
+        {
+            var baziJson = await _astrologyService.GetBaziDataAsync(request.BirthDate, request.Hour, request.IsMale);
+            
+            if (string.IsNullOrEmpty(baziJson)) 
+                return BadRequest(new { error = "Không lấy được dữ liệu Bát Tự từ Core Engine Node.js." });
 
-        return Ok(jsonData); // Trả về JSON từ Node.js
+            var aiReadingText = await _geminiService.AnalyzeBaziChartAsync(baziJson);
+            var baziDataObject = System.Text.Json.JsonSerializer.Deserialize<object>(baziJson);
+
+            return Ok(new {
+                status = "success",
+                chartData = baziDataObject,
+                aiReading = aiReadingText
+            });
+        }
+        catch (Exception ex)
+        {
+            // SỬA LẠI DÒNG NÀY: Trả về một Object vô danh (ẩn danh) để nó tự convert thành JSON
+            return StatusCode(500, new { 
+                status = "error", 
+                error = $"Lỗi hệ thống: {ex.Message} - {ex.InnerException?.Message}" 
+            });
+        }
     }
 
 }

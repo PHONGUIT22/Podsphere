@@ -77,7 +77,6 @@ const getStars = (gan, chi, context) => {
     const { dayGan, yearGan, monthChi, dayChi, yearChi } = context;
     const stars = [];
     
-    // 1. Nhóm Quý Nhân & Văn Xương
     const thienAtMap = { '甲':['丑','未'], '戊':['丑','未'], '庚':['寅','午'], '辛':['寅','午'], '乙':['子','申'], '己':['子','申'], '壬':['卯','巳'], '癸':['卯','巳'], '丙':['亥','酉'], '丁':['亥','酉'] };
     if (thienAtMap[dayGan]?.includes(chi) || thienAtMap[yearGan]?.includes(chi)) stars.push("Thiên Ất");
 
@@ -90,14 +89,12 @@ const getStars = (gan, chi, context) => {
     const vanXuongMap = { '甲':'巳', '乙':'午', '丙':'申', '戊':'申', '丁':'酉', '己':'酉', '庚':'亥', '辛':'子', '壬':'寅', '癸':'卯' };
     if (vanXuongMap[dayGan] === chi || vanXuongMap[yearGan] === chi) stars.push("Văn Xương");
 
-    // 2. Nhóm Lộc & Kình Dương
     const locMap = { '甲':'寅', '乙':'卯', '丙':'巳', '丁':'午', '戊':'巳', '己':'午', '庚':'申', '辛':'酉', '壬':'亥', '癸':'子' };
     if (locMap[dayGan] === chi) stars.push("Lộc Thần");
 
     const kinhDuongMap = { '甲':'卯', '乙':'辰', '丙':'午', '丁':'未', '戊':'午', '己':'未', '庚':'酉', '辛':'戌', '壬':'子', '癸':'丑' };
     if (kinhDuongMap[dayGan] === chi) stars.push("Kình Dương");
 
-    // 3. Nhóm Tam Hợp (Dịch Mã, Đào Hoa, Hoa Cái, Kiếp Sát, Tướng Tinh, Tai Sát)
     const getTriadBase = (c) => {
         if (['申', '子', '辰'].includes(c)) return 'Thủy';
         if (['寅', '午', '戌'].includes(c)) return 'Hỏa';
@@ -125,12 +122,9 @@ const getStars = (gan, chi, context) => {
     const taiSatMap = { 'Thủy':'午', 'Hỏa':'子', 'Kim':'卯', 'Mộc':'酉' };
     if (bases.some(b => taiSatMap[b] === chi)) stars.push("Tai Sát");
 
-    // 4. Cô Thần - Quả Tú
     const coQuaMap = {
-        '亥':'寅戌', '子':'寅戌', '丑':'寅戌', 
-        '寅':'巳丑', '卯':'巳丑', '辰':'巳丑', 
-        '巳':'申辰', '午':'申辰', '未':'申辰', 
-        '申':'亥未', '酉':'亥未', '戌':'亥未'  
+        '亥':'寅戌', '子':'寅戌', '丑':'寅戌', '寅':'巳丑', '卯':'巳丑', '辰':'巳丑', 
+        '巳':'申辰', '午':'申辰', '未':'申辰', '申':'亥未', '酉':'亥未', '戌':'亥未'  
     };
     const coQua = coQuaMap[yearChi];
     if (coQua) {
@@ -160,6 +154,77 @@ const getTenGod = (targetGan, dayMasterGan) => {
     if (base === 'Tài') return dm.polarity === tg.polarity ? "Thiên Tài" : "Chính Tài";
     if (base === 'Quan/Sát') return dm.polarity === tg.polarity ? "Thất Sát" : "Chính Quan";
     return base;
+};
+
+// THUẬT TOÁN ĐÁNH GIÁ ĐỘ MẠNH YẾU CỦA BÁT TỰ & THẬP THẦN
+const analyzeBaziChart = (pillars, dayMasterGan) => {
+    let scores = { 'Tỷ/Kiếp': 0, 'Ấn': 0, 'Thực/Thương': 0, 'Tài': 0, 'Quan/Sát': 0 };
+    let totalScore = 0;
+
+    const RELATIONS = {
+        'Mộc': { 'Tỷ/Kiếp': 'Mộc', 'Thực/Thương': 'Hỏa', 'Tài': 'Thổ', 'Quan/Sát': 'Kim', 'Ấn': 'Thủy' },
+        'Hỏa': { 'Tỷ/Kiếp': 'Hỏa', 'Thực/Thương': 'Thổ', 'Tài': 'Kim', 'Quan/Sát': 'Thủy', 'Ấn': 'Mộc' },
+        'Thổ': { 'Tỷ/Kiếp': 'Thổ', 'Thực/Thương': 'Kim', 'Tài': 'Thủy', 'Quan/Sát': 'Mộc', 'Ấn': 'Hỏa' },
+        'Kim': { 'Tỷ/Kiếp': 'Kim', 'Thực/Thương': 'Thủy', 'Tài': 'Mộc', 'Quan/Sát': 'Hỏa', 'Ấn': 'Thổ' },
+        'Thủy': { 'Tỷ/Kiếp': 'Thủy', 'Thực/Thương': 'Mộc', 'Tài': 'Hỏa', 'Quan/Sát': 'Thổ', 'Ấn': 'Kim' }
+    };
+    const dmElement = GAN_MAP[dayMasterGan].element;
+    const groupElements = RELATIONS[dmElement];
+
+    const addScore = (gan, weight) => {
+        if (!gan || gan === '?') return;
+        const tg = getTenGod(gan, dayMasterGan);
+        let group = '';
+        if(tg.includes('Tỷ') || tg.includes('Kiếp')) group = 'Tỷ/Kiếp';
+        else if(tg.includes('Thực') || tg.includes('Thương')) group = 'Thực/Thương';
+        else if(tg.includes('Tài')) group = 'Tài';
+        else if(tg.includes('Quan') || tg.includes('Sát')) group = 'Quan/Sát';
+        else if(tg.includes('Ấn') || tg.includes('Kiêu')) group = 'Ấn';
+
+        if(group) {
+            scores[group] += weight;
+            totalScore += weight;
+        }
+    };
+
+    // Điểm số phân bổ (Trọng số Lệnh tháng cao nhất)
+    const weights = {
+        year: { gan: 10, chiMain: 10, chiSub1: 3, chiSub2: 1 },
+        month: { gan: 12, chiMain: 25, chiSub1: 8, chiSub2: 3 }, 
+        day: { gan: 0, chiMain: 12, chiSub1: 4, chiSub2: 1 }, // DM là 10đ cộng riêng bên dưới
+        hour: { gan: 10, chiMain: 10, chiSub1: 3, chiSub2: 1 }
+    };
+
+    scores['Tỷ/Kiếp'] += 10;
+    totalScore += 10;
+
+    Object.keys(pillars).forEach(key => {
+        const p = pillars[key];
+        if(key !== 'day') addScore(p.gan, weights[key].gan);
+        const hg = p.hiddenGan;
+        if(hg[0]) addScore(hg[0].name, weights[key].chiMain);
+        if(hg[1]) addScore(hg[1].name, weights[key].chiSub1);
+        if(hg[2]) addScore(hg[2].name, weights[key].chiSub2);
+    });
+
+    let percentages = {};
+    Object.keys(scores).forEach(k => {
+        percentages[k] = Math.round((scores[k] / totalScore) * 100);
+    });
+
+    const helpDM = percentages['Tỷ/Kiếp'] + percentages['Ấn'];
+    let strength = "CÂN BẰNG";
+    let desc = "Bát tự tương đối hài hòa, cuộc đời bình ổn, ít sóng gió lớn. Cần dụng thần linh hoạt tùy theo đại vận.";
+    
+    if (helpDM >= 60) {
+        strength = "THÂN VƯỢNG (MẠNH)";
+        desc = "Nhật Chủ được lệnh hoặc được nhiều sinh trợ. Tính cách độc lập, tự tin, khả năng chịu áp lực tốt. Dụng thần thường là Thực/Thương, Tài, hoặc Quan/Sát để xì hơi/tỉa gọt bớt sự dư thừa.";
+    } else if (helpDM <= 40) {
+        strength = "THÂN NHƯỢC (YẾU)";
+        desc = "Nhật Chủ thất lệnh hoặc bị khắc xết nhiều. Tính cách thận trọng, khôn khéo, hợp làm việc nhóm. Dụng thần là Ấn hoặc Tỷ/Kiếp để bồi bổ, tương trợ cho bản mệnh vững vàng.";
+    }
+
+    return { percentages, strength, desc, helpDM, groupElements };
 };
 
 const getMsFromSolar = (s) => new Date(s.getYear(), s.getMonth() - 1, s.getDay(), s.getHour(), s.getMinute(), s.getSecond()).getTime();
@@ -263,7 +328,8 @@ const getBaziData = (year, month, day, hour, genderStr, viewYear) => {
     const startViewYear = viewYear ? parseInt(viewYear) : new Date().getFullYear();
     const annualCycles = []; 
 
-    for (let row = 0; row < 8; row++) {
+    // CHỈ CHẠY 3 VÒNG LẶP (30 NĂM LƯU NIÊN) THAY VÌ 8
+    for (let row = 0; row < 3; row++) {
         const decade = [];
         for (let col = 0; col < 10; col++) {
             const curY = startViewYear + (row * 10) + col;
@@ -286,19 +352,26 @@ const getBaziData = (year, month, day, hour, genderStr, viewYear) => {
         annualCycles.push(decade); 
     }
 
+    const pillarsProcessed = {
+        year: processPillar(lunar.getYearInGanZhi(), dayMasterGan, 'year', context),
+        month: processPillar(lunar.getMonthInGanZhi(), dayMasterGan, 'month', context),
+        day: processPillar(lunar.getDayInGanZhi(), dayMasterGan, 'day', context),
+        hour: processPillar(lunar.getTimeInGanZhi(), dayMasterGan, 'hour', context)
+    };
+
+    const analysis = analyzeBaziChart(pillarsProcessed, dayMasterGan);
+
     return {
         solar: { year, month, day, hour: `${hour}:00` },
+        lunarDateString: `${lunar.getDay()}/${lunar.getMonth()}/${lunar.getYear()}`,
         gender,
+        polarityGender: `${yearPolarity} ${gender}`,
         startAgeInfo: `${startYears} tuổi ${startMonths} tháng ${startDays} ngày (Khởi vận ${startAge} tuổi)`,
         extraInfo,
-        pillars: {
-            year: processPillar(lunar.getYearInGanZhi(), dayMasterGan, 'year', context),
-            month: processPillar(lunar.getMonthInGanZhi(), dayMasterGan, 'month', context),
-            day: processPillar(lunar.getDayInGanZhi(), dayMasterGan, 'day', context),
-            hour: processPillar(lunar.getTimeInGanZhi(), dayMasterGan, 'hour', context)
-        },
+        pillars: pillarsProcessed,
         majorCycles,
         annualCycles,
+        analysis, // TRẢ VỀ THÊM THÔNG TIN PHÂN TÍCH
         dayMaster: { name: dayMasterGan, element: GAN_MAP[dayMasterGan].element }
     };
 };

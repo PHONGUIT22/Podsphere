@@ -102,7 +102,16 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll",
         builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 });
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000") // Đừng để dấu / ở cuối
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
 // 3. ĐĂNG KÝ SERVICES (DEPENDENCY INJECTION)
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
@@ -141,6 +150,7 @@ builder.Services.AddScoped<IFileStorageService, S3StorageService>();
 builder.Services.AddScoped<IHistoryService, HistoryService>();
 // Astrology Service
 builder.Services.AddScoped<IAstrologyService, AstrologyService>();
+builder.Services.AddHttpClient<IGeminiService, GeminiService>();
 builder.Services.AddHttpClient(); // Đăng ký Factory chung
 
 builder.Services.AddHttpClient("AstrologyClient", client => {
