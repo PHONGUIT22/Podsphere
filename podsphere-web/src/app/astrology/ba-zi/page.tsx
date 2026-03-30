@@ -23,47 +23,34 @@ export default function BaziPage() {
 
     setLoading(true);
     try {
+        const dateObj = new Date(formData.birthDate);
+        const year = dateObj.getFullYear();
+        const month = dateObj.getMonth() + 1;
+        const day = dateObj.getDate();
+        const hour = formData.hour;
+        const gender = formData.isMale ? 1 : 0;
         const name = formData.fullName;
 
-        // BƯỚC 1: ĐỔI URL GỌI VỀ BACKEND .NET THAY VÌ GỌI NODEJS
-        // Chú ý sửa cổng 5000 thành cổng Backend .NET của bạn (ví dụ 5001, 7123...)
-        const dotnetUrl = `http://localhost:5015/api/astrology/get-bazi-with-ai-reading`;
+        // BƯỚC 4 LÀ CHỖ NÀY: GỌI THẲNG NODEJS (HOẶC API .NET CHỈ LẤY DATA)
+        // Nó trả về ngay lập tức, không bắt người dùng chờ AI luận
+        const url = `http://127.0.0.1:3001/api/astrology/bazi?year=${year}&month=${month}&day=${day}&hour=${hour}&gender=${gender}`;
         
-        console.log("Fetching for:", name, "at", dotnetUrl);
-
-        const res = await fetch(dotnetUrl, {
-          method: 'POST',
+        const res = await fetch(url, {
+          method: 'GET',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            birthDate: formData.birthDate,
-            hour: formData.hour,
-            isMale: formData.isMale
-          })
         });
 
-        // SỬA TỪ ĐOẠN NÀY
-        const responseText = await res.text(); // Đọc dạng text trước để phòng hờ
-        let json;
-        try {
-            json = JSON.parse(responseText); // Cố gắng parse thành JSON
-        } catch (e) {
-            throw new Error(`Server trả về dữ liệu không hợp lệ: ${responseText}`);
-        }
+        const json = await res.json();
         
-        if (res.ok && json.status === "success") {
-            const finalData = { 
-               ...json.chartData.data, 
-               fullName: name,
-               aiReading: json.aiReading 
-            };
-            setResult(finalData); 
+        if (json.status === "success") {
+            // Ném dữ liệu vào cho BaziChart vẽ bảng
+            setResult({ ...json.data, fullName: name }); 
         } else {
-            // Ném lỗi thật sự ra màn hình alert
-            throw new Error(json.error || "Lỗi server .NET không xác định");
+            throw new Error(json.error || "Lỗi server");
         }
     } catch (error: any) {
         console.error("Fetch error:", error);
-        alert("Lỗi kết nối tới Server .NET hoặc AI đang bị quá tải!");
+        alert("Lỗi kết nối tới Server Node.js!");
     } finally {
         setLoading(false);
     }
