@@ -1,28 +1,198 @@
 // src/components/astrology/IChingHexagram.tsx
+'use client';
+
 import React from 'react';
 
-export const IChingHexagram = ({ lines, name }: { lines: number[], name: string }) => {
-  // lines: [1, 0, 1, 1, 0, 0] (1 là Dương, 0 là Âm - Thứ tự từ dưới lên)
-  return (
-    <div className="flex flex-col items-center space-y-4">
-      <div className="flex flex-col-reverse gap-2">
-        {lines.map((type, i) => (
-          <div key={i} className="w-24 h-3 flex gap-2">
-            {type === 1 ? (
-              /* Vạch Dương */
-              <div className="w-full h-full bg-indigo-500 rounded-sm shadow-[0_0_10px_rgba(99,102,241,0.3)]" />
-            ) : (
-              /* Vạch Âm */
-              <>
-                <div className="w-[45%] h-full bg-zinc-700 rounded-sm" />
-                <div className="w-[10%] h-full" />
-                <div className="w-[45%] h-full bg-zinc-700 rounded-sm" />
-              </>
-            )}
-          </div>
-        ))}
-      </div>
-      <span className="text-sm font-black text-white uppercase tracking-widest">{name}</span>
+export default function IChingHexagram({ hexagramData, aiReading }: any) {
+  if (!hexagramData || !hexagramData.primary || !hexagramData.mutated) return null;
+
+  const { primary, mutated, haoDong, topic, fullTime, bazi, tietKhi, nhatThan, nguyetLenh } = hexagramData;
+
+  const TRIGRAM_LINES: Record<string, number[]> = {
+    'Càn': [1, 1, 1], 'Đoài': [1, 1, 0], 'Ly': [1, 0, 1], 'Chấn': [1, 0, 0],
+    'Tốn': [0, 1, 1], 'Khảm': [0, 1, 0], 'Cấn': [0, 0, 1], 'Khôn': [0, 0, 0]
+  };
+
+  const pLower = primary.lower?.name || 'Khôn';
+  const pUpper = primary.upper?.name || 'Khôn';
+  const mLower = mutated.lower?.name || 'Khôn';
+  const mUpper = mutated.upper?.name || 'Khôn';
+
+  const pLines = [...TRIGRAM_LINES[pLower], ...TRIGRAM_LINES[pUpper]];
+  const mLines = [...TRIGRAM_LINES[mLower], ...TRIGRAM_LINES[mUpper]];
+
+  // Vạch quẻ nhỏ cho Bảng
+  const SmallLine = ({ isYang, isMoving }: { isYang: number, isMoving: boolean }) => (
+    <div className="flex justify-between w-10 h-2 mx-auto">
+      {isYang === 1 ? (
+        <div className={`w-full h-full ${isMoving ? 'bg-red-600' : 'bg-blue-900'}`}></div>
+      ) : (
+        <>
+          <div className={`w-[42%] h-full ${isMoving ? 'bg-red-600' : 'bg-blue-900'}`}></div>
+          <div className={`w-[42%] h-full ${isMoving ? 'bg-red-600' : 'bg-blue-900'}`}></div>
+        </>
+      )}
     </div>
   );
-};
+
+  // Vạch quẻ lớn cho phần giữa
+  const BigLine = ({ isYang, isMoving }: { isYang: number, isMoving: boolean }) => (
+    <div className="flex justify-between w-28 h-4 mx-auto mb-1.5 shadow-sm">
+      {isYang === 1 ? (
+        <div className={`w-full h-full ${isMoving ? 'bg-red-600' : 'bg-blue-900'}`}></div>
+      ) : (
+        <>
+          <div className={`w-[44%] h-full ${isMoving ? 'bg-red-600' : 'bg-blue-900'}`}></div>
+          <div className={`w-[44%] h-full ${isMoving ? 'bg-red-600' : 'bg-blue-900'}`}></div>
+        </>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="max-w-6xl mx-auto my-8 bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden font-sans">
+      
+      {/* 1. THÔNG TIN HEADER (Top) - Màu sắc nhẹ nhàng, hiện đại */}
+      <div className="p-6 bg-slate-50 border-b border-gray-200">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-[15px]">
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <span className="text-gray-500 w-32">Việc cần xem:</span>
+              <span className="font-bold text-blue-900">{topic || 'Chung'}</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-gray-500 w-32">Thời gian:</span>
+              <span className="text-gray-700">{fullTime}</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="text-gray-500 w-32">Can chi:</span>
+              <span className="font-bold text-slate-800">{bazi}</span>
+            </div>
+          </div>
+          <div className="space-y-2 border-l-0 md:border-l border-gray-200 md:pl-6">
+            <div className="flex justify-between">
+              <span className="text-gray-500">Tiết Khí:</span> 
+              <span className="font-bold text-emerald-700">{tietKhi}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Nhật thần:</span> 
+              <span className="font-bold text-red-600">{nhatThan}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Nguyệt lệnh:</span> 
+              <span className="font-bold text-red-600">{nguyetLenh}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. QUẺ LỚN (Middle) - Màu xanh vs Màu đỏ hào động */}
+      <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-200 border-b border-gray-200 bg-white">
+        {/* Quẻ Chính */}
+        <div className="p-8 text-center bg-blue-50/10">
+          <h2 className="text-2xl font-black text-blue-900 uppercase mb-6 tracking-widest">
+            {primary.hexagram.name}
+          </h2>
+          <div className="flex flex-col-reverse justify-center mb-4">
+             {pLines.map((isYang, idx) => (
+               <BigLine key={idx} isYang={isYang} isMoving={(idx + 1) === haoDong} />
+             ))}
+          </div>
+          <p className="text-lg text-slate-500 font-medium">Họ {primary.palace}</p>
+        </div>
+
+        {/* Quẻ Biến */}
+        <div className="p-8 text-center bg-red-50/10">
+          <h2 className="text-2xl font-black text-red-800 uppercase mb-6 tracking-widest">
+            {mutated.hexagram.name}
+          </h2>
+          <div className="flex flex-col-reverse justify-center mb-4">
+             {mLines.map((isYang, idx) => (
+               <BigLine key={idx} isYang={isYang} isMoving={(idx + 1) === haoDong} />
+             ))}
+          </div>
+          <p className="text-lg text-slate-500 font-medium">Họ {mutated.palace}</p>
+        </div>
+      </div>
+
+      {/* 3. BẢNG LỤC HÀO (Bottom) - Màu sắc phân biệt các thành phần */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 divide-y xl:divide-y-0 xl:divide-x divide-gray-200">
+        
+        {/* Bảng Quẻ Chính */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-[14px] text-center border-collapse">
+            <thead>
+              <tr className="bg-blue-900 text-white">
+                <th className="py-3 px-1 w-14">Hào</th>
+                <th className="py-3 px-1 w-12">T/Ư</th>
+                <th className="py-3 px-1 text-left">Lục Thân</th>
+                <th className="py-3 px-1 text-left">Can Chi</th>
+                <th className="py-3 px-1 text-left">Phục Thần</th>
+                <th className="py-3 px-1 w-10">TK</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[5, 4, 3, 2, 1, 0].map((i) => {
+                const h = primary.lucHao[i];
+                const isMoving = (i + 1) === haoDong;
+                return (
+                  <tr key={i} className={`border-b border-gray-100 hover:bg-slate-50 ${isMoving ? 'bg-red-50' : ''}`}>
+                    <td className="py-3 px-1 align-middle"><SmallLine isYang={pLines[i]} isMoving={isMoving} /></td>
+                    <td className="py-3 px-1 font-bold">
+                      {h.theUng === 'Thế' ? <span className="text-red-600">T</span> : h.theUng === 'Ứng' ? <span className="text-blue-600">Ư</span> : ''}
+                    </td>
+                    <td className={`py-3 px-1 text-left font-bold ${isMoving ? 'text-red-600' : 'text-slate-700'}`}>{h.lucThan}</td>
+                    <td className="py-3 px-1 text-left text-slate-600 font-medium">{h.canChi}</td>
+                    <td className="py-3 px-1 text-left text-gray-400 text-xs italic">{h.phucThan || ''}</td>
+                    <td className="py-3 px-1 font-bold text-red-600">{h.isTuanKhong ? 'K' : ''}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Bảng Quẻ Biến */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-[14px] text-center border-collapse">
+            <thead>
+              <tr className="bg-red-800 text-white">
+                <th className="py-3 px-1 w-14">Hào</th>
+                <th className="py-3 px-1 text-left">Lục Thân</th>
+                <th className="py-3 px-1 text-left">Can Chi</th>
+                <th className="py-3 px-1 text-left">Lục Thú</th>
+                <th className="py-3 px-1 w-10">TK</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[5, 4, 3, 2, 1, 0].map((i) => {
+                const h = mutated.lucHao[i];
+                const isMoving = (i + 1) === haoDong;
+                return (
+                  <tr key={i} className={`border-b border-gray-100 hover:bg-slate-50 ${isMoving ? 'bg-yellow-50' : ''}`}>
+                    <td className="py-3 px-1 align-middle"><SmallLine isYang={mLines[i]} isMoving={isMoving} /></td>
+                    <td className={`py-3 px-1 text-left font-bold ${isMoving ? 'text-red-600' : 'text-slate-700'}`}>{h.lucThan}</td>
+                    <td className="py-3 px-1 text-left text-slate-600 font-medium">{h.canChi}</td>
+                    <td className="py-3 px-1 text-left text-purple-700 font-bold">{primary.lucHao[i].lucThu}</td>
+                    <td className="py-3 px-1 font-bold text-red-600">{h.isTuanKhong ? 'K' : ''}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 4. LỜI GIẢI AI - Màu vàng ấm áp */}
+      <div className="p-8 bg-amber-50/50 border-t border-amber-100">
+        <h3 className="font-bold text-amber-900 mb-4 text-lg flex items-center gap-2">
+          <span className="text-2xl">✨</span> Lời Giải Từ Huyền Cơ
+        </h3>
+        <div className="text-slate-700 leading-relaxed whitespace-pre-wrap text-[16px] italic bg-white p-6 rounded-lg shadow-inner border border-amber-100">
+          {aiReading || "Đang phân tích thiên cơ..."}
+        </div>
+      </div>
+      
+    </div>
+  );
+}

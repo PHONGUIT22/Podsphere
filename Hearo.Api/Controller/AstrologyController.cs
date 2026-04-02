@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Hearo.Application.Common.Interfaces.Persistence;
 using Hearo.Domain.Entities;
+using System.Text.Json;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Hearo.Api.Controllers;
 
@@ -26,21 +30,15 @@ public class AstrologyController : ControllerBase
     [HttpPost("create-profile")]
     public async Task<IActionResult> CreateProfile([FromBody] CreateProfileRequest request)
     {
-        // 1. Gọi sang NodeJS/Python lấy dữ liệu lá số
         var jsonData = await _astrologyService.GetAstrologyDataAsync(
-            request.BirthDate, 
-            request.Hour, 
-            request.IsMale, 
-            request.ViewYear);
+            request.BirthDate, request.Hour, request.IsMale, request.ViewYear);
 
         if (string.IsNullOrEmpty(jsonData)) 
             return BadRequest(new { message = "Lỗi tính toán lá số từ Server xử lý." });
 
-        // 2. Lấy UserId từ Token
         var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userIdString)) return Unauthorized();
 
-        // 3. Tạo Entity để lưu vào Database
         var profile = new AstrologyProfile
         {
             UserId = Guid.Parse(userIdString),
@@ -56,50 +54,36 @@ public class AstrologyController : ControllerBase
 
         return Ok(new { 
             message = "Lập lá số thành công!", 
-            data = jsonData,
+            data = JsonSerializer.Deserialize<object>(jsonData),
             viewYear = request.ViewYear 
         });
     }
 
-    /// <summary>
-    /// Lấy dữ liệu Bát Tự kèm theo lời luận giải của AI (Tùy chọn Persona)
-    /// </summary>
     [HttpPost("get-bazi-with-ai-reading")]
     public async Task<IActionResult> GetBaziWithAiReading([FromBody] BaziRequest request)
     {
         try 
         {
-            // 1. Lấy dữ liệu thô từ Core Engine
             var baziJson = await _astrologyService.GetBaziDataAsync(request.BirthDate, request.Hour, request.IsMale);
-            
             if (string.IsNullOrEmpty(baziJson)) 
                 return BadRequest(new { status = "error", message = "Không lấy được dữ liệu Bát Tự." });
 
-            // 2. Gọi AI luận giải với Persona (Mặc định là traditional nếu không truyền)
             string persona = string.IsNullOrEmpty(request.Persona) ? "traditional" : request.Persona;
             var aiReadingText = await _geminiService.AnalyzeBaziChartAsync(baziJson, persona);
             
-            var baziDataObject = System.Text.Json.JsonSerializer.Deserialize<object>(baziJson);
-
             return Ok(new {
                 status = "success",
-                chartData = baziDataObject,
+                chartData = JsonSerializer.Deserialize<object>(baziJson),
                 aiReading = aiReadingText,
                 personaUsed = persona
             });
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { 
-                status = "error", 
-                message = $"Lỗi hệ thống: {ex.Message}" 
-            });
+            return StatusCode(500, new { status = "error", message = $"Lỗi hệ thống: {ex.Message}" });
         }
     }
 
-    /// <summary>
-    /// Chỉ luận giải AI dựa trên dữ liệu JSON có sẵn (Dùng khi đổi Persona mà không muốn gọi lại Core Engine)
-    /// </summary>
     [HttpPost("generate-ai-reading")]
     public async Task<IActionResult> GenerateAiReading([FromBody] AiReadingRequest request)
     {
@@ -110,34 +94,103 @@ public class AstrologyController : ControllerBase
 
             var aiReadingText = await _geminiService.AnalyzeBaziChartAsync(request.BaziJsonData, request.Persona);
             
-            return Ok(new { 
-                status = "success", 
-                aiReading = aiReadingText,
-                persona = request.Persona 
-            });
+            return Ok(new { status = "success", aiReading = aiReadingText, persona = request.Persona });
         }
         catch (Exception ex)
         {
             return StatusCode(500, new { status = "error", message = ex.Message });
         }
     }
+
+    [Authorize]
+    [HttpPost("cast-iching")]
+    public async Task<IActionResult> CastIChing([FromBody] CastIChingRequest request)
+    {
+        try
+        {
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString)) return Unauthorized();
+            var userId = Guid.Parse(userIdString);
+
+            // 1. Gọi Node.js Engine để lấy Quẻ Dịch (Truyền Năm, Tháng, Ngày, Giờ)
+            var hexagramResultJson = await _astrologyService.CastIChingHexagramAsync(
+                request.Year, 
+                request.Month, 
+                request.Day, 
+                request.Hour, 
+                request.Topic
+            );
+
+            if (string.IsNullOrEmpty(hexagramResultJson))
+                return BadRequest(new { message = "Không thể lập quẻ lúc này. Server thuật số có thể đang bận." });
+
+            // 2. Gọi AI Gemini luận giải Quẻ
+            string aiAnalysis = await _geminiService.AnalyzeIChingAsync(hexagramResultJson, request.Question);
+
+            // 3. Trích xuất tên Quẻ Chủ & Quẻ Biến để lưu Database
+            string primaryHexName = "Quẻ Dịch";
+            string mutatedHexName = "";
+            
+            using (JsonDocument doc = JsonDocument.Parse(hexagramResultJson))
+            {
+                if (doc.RootElement.TryGetProperty("data", out var dataNode))
+                {
+                    if (dataNode.TryGetProperty("primary", out var primaryNode) && 
+                        primaryNode.TryGetProperty("hexagram", out var p_hex) && 
+                        p_hex.TryGetProperty("name", out var p_name))
+                    {
+                        primaryHexName = p_name.GetString() ?? "Quẻ Chủ";
+                    }
+
+                    if (dataNode.TryGetProperty("mutated", out var mutNode) && 
+                        mutNode.TryGetProperty("hexagram", out var m_hex) && 
+                        m_hex.TryGetProperty("name", out var m_name))
+                    {
+                        mutatedHexName = m_name.GetString() ?? "Quẻ Biến";
+                    }
+                }
+            }
+
+            // 4. Lưu Database
+            var divinationHistory = new IChingDivination
+            {
+                UserId = userId,
+                Question = request.Question,
+                Method = request.Method,
+                OriginalHexagram = primaryHexName,
+                MutatedHexagram = mutatedHexName, 
+                AIAnalysis = aiAnalysis
+            };
+
+            _context.IChingDivinations.Add(divinationHistory);
+            await _context.SaveChangesAsync();
+
+            // 5. Trả kết quả về Frontend
+            return Ok(new {
+                status = "success",
+                hexagramData = JsonSerializer.Deserialize<object>(hexagramResultJson),
+                aiReading = aiAnalysis
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { status = "error", message = $"Lỗi Gieo Quẻ: {ex.Message}" });
+        }
+    }
 }
 
-// --- DTO RECORDS ---
+// --- DTO RECORDS (Nằm ngoài class) ---
 
-public record BaziRequest(
-    DateTime BirthDate, 
+public record BaziRequest(DateTime BirthDate, int Hour, bool IsMale, string Persona = "traditional");
+public record CreateProfileRequest(string FullName, DateTime BirthDate, int Hour, bool IsMale, int ViewYear);
+public record AiReadingRequest(string BaziJsonData, string Persona);
+
+// ĐÃ SỬA: Đổi TimeGan/TimeZhi thành Year/Month/Day/Hour
+public record CastIChingRequest(
+    string Question, 
+    string Topic, 
+    int Year, 
+    int Month, 
+    int Day, 
     int Hour, 
-    bool IsMale, 
-    string Persona = "traditional"); // Thêm Persona vào request này
-
-public record CreateProfileRequest(
-    string FullName, 
-    DateTime BirthDate, 
-    int Hour, 
-    bool IsMale, 
-    int ViewYear);
-
-public record AiReadingRequest(
-    string BaziJsonData, 
-    string Persona);
+    string Method = "MaiHoa");

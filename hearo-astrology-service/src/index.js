@@ -4,6 +4,7 @@ const cors = require('cors');
 const axios = require('axios');
 const { Solar } = require('lunar-javascript');
 const { getBaziData } = require('./baziService'); // Import service vừa tạo
+const ichingService = require('./ichingService');
 
 const app = express();
 app.use(cors());
@@ -94,4 +95,20 @@ app.get('/api/astrology/bazi', (req, res) => {
 const PORT = 3001;
 app.listen(PORT, () => {
     console.log(`✅ API Node.js Gateway đang chạy ở cổng ${PORT}!`);
+});
+
+// Sửa lại endpoint này
+app.post('/api/iching/cast', async (req, res) => {
+    try {
+        const { year, month, day, hour, topic } = req.body;
+        
+        if (!year || !month || !day) {
+            return res.status(400).json({ error: "Thiếu thông tin ngày giờ gieo quẻ!" });
+        }
+
+        const result = await ichingService.castMaiHoaHexagram(year, month, day, hour, topic);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: error.message });
+    }
 });

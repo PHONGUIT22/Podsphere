@@ -233,4 +233,30 @@ Bát Tự (JSON):
 Kết lại bằng: 👉 'Mệnh do thiên định, nhưng đức do tâm sinh.'
 ";
     }
+public async Task<string> AnalyzeIChingAsync(string hexagramJson, string question)
+    {
+        // 1. Dựng Prompt gửi cho AI
+        string prompt = $@"
+Bạn là một chuyên gia về Kinh Dịch và Bát Tự (Huyền Cơ Tôn Giả).
+Người dùng muốn xin quẻ với câu hỏi/vấn đề: '{question}'.
+
+Dưới đây là dữ liệu Quẻ Dịch đã được lập dựa trên Bát Tự và Thời gian hiện tại:
+{hexagramJson}
+
+Hãy phân tích quẻ này và đưa ra lời khuyên cho người dùng. 
+Yêu cầu:
+1. Giải thích ngắn gọn tên quẻ và ý nghĩa cốt lõi.
+2. Trả lời trực tiếp vào câu hỏi của người dùng.
+3. Đưa ra lời khuyên hành động (Nên làm gì, tránh làm gì).
+Giọng văn: Uyên bác, sâu sắc, nhưng dễ hiểu và mang tính động viên.
+";
+
+        // 2. Tùy thuộc vào cách bạn đang gọi Gemini ở các hàm khác, hãy gọi tương tự ở đây
+        // Ví dụ (chỉ mang tính minh họa, hãy copy logic gọi Gemini từ hàm AnalyzeBaziChartAsync của bạn xuống):
+        
+        // var response = await CallGeminiApi(prompt);
+        // return response;
+        
+        return "Lời giải AI đang được cập nhật..."; // Thay dòng này bằng logic gọi API Gemini thực tế của bạn
+    }
 }
