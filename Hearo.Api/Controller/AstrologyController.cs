@@ -177,6 +177,59 @@ public class AstrologyController : ControllerBase
             return StatusCode(500, new { status = "error", message = $"Lỗi Gieo Quẻ: {ex.Message}" });
         }
     }
+    [Authorize] // Bắt buộc user phải đăng nhập mới được lưu lá số
+    [HttpPost("save-bazi")]
+    public async Task<IActionResult> SaveBaziProfile([FromBody] CreateProfileRequest request)
+    {
+        try
+        {
+            // 1. Lấy ID của User đang đăng nhập
+            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdString)) return Unauthorized();
+
+            // 2. Gọi sang Node.js để tính toán Bát Tự
+            var baziJson = await _astrologyService.GetBaziDataAsync(request.BirthDate, request.Hour, request.IsMale);
+            if (string.IsNullOrEmpty(baziJson)) 
+                return BadRequest(new { message = "Lỗi tính toán lá số từ Server thuật số." });
+
+            // 3. Tạo Hồ sơ mới (Profile)
+            var profile = new AstrologyProfile
+            {
+                UserId = Guid.Parse(userIdString),
+                FullName = request.FullName,
+                SolarBirthDate = request.BirthDate,
+                BirthTime = new TimeSpan(request.Hour, 0, 0),
+                IsMale = request.IsMale,
+                IsPrimaryProfile = false, // Có thể cho user chọn đây là lá số của bản thân hay người thân
+            };
+
+            // 4. Tạo Bảng Bát Tự đính kèm vào Hồ sơ
+            profile.BaziChart = new BaziChart 
+            { 
+                ChartDataJson = baziJson, // Cực kỳ quan trọng: Lưu toàn bộ JSON lá số để sau này vẽ lại UI
+                
+                // Bạn có thể parse baziJson ở đây để bóc tách YearPillar, DayMaster... lưu vào các cột tương ứng nếu muốn sau này dùng LINQ query tìm kiếm người cùng ngày sinh.
+                // Ví dụ tạm để trống hoặc gán giá trị mặc định.
+                YearPillar = "", 
+                DayMasterStrength = "" 
+            };
+
+            // 5. Lưu vào SQL Server Database
+            _context.AstrologyProfiles.Add(profile);
+            await _context.SaveChangesAsync();
+
+            // 6. Trả dữ liệu về cho React hiển thị
+            return Ok(new { 
+                status = "success",
+                message = "Lập và lưu lá số thành công!", 
+                data = JsonSerializer.Deserialize<object>(baziJson)
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { status = "error", message = $"Lỗi hệ thống: {ex.Message}" });
+        }
+    }
 }
 
 // --- DTO RECORDS (Nằm ngoài class) ---

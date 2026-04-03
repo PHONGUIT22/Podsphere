@@ -65,113 +65,116 @@ export default function IChingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-10">
+    <div className="min-h-screen bg-black text-white p-4 md:p-8 font-sans">
+      <div className="max-w-5xl mx-auto space-y-12">
         
-        {/* Header */}
-        <div className="text-center space-y-3">
-          <h1 className="text-4xl md:text-5xl font-black text-amber-500 uppercase tracking-tighter">
+        {/* Header - Chuyển sang Indigo */}
+        <div className="text-center space-y-4">
+          <h1 className="text-5xl font-black tracking-tighter text-indigo-500 uppercase">
             Xin Quẻ Kinh Dịch
           </h1>
-          <p className="text-zinc-500 font-medium italic">
+          <p className="text-zinc-500 font-medium">
             "Hữu niệm tất ứng - Thành tâm thỉnh quẻ, linh ứng tại tâm"
           </p>
         </div>
 
-        {/* Form Gieo Quẻ - Nền trắng, Chữ đen đậm */}
-        <div className="bg-white p-6 md:p-10 rounded-[2.5rem] shadow-2xl border border-zinc-800 animate-in fade-in slide-in-from-bottom-4">
-          <form onSubmit={handleCastIChing} className="space-y-8">
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Chủ đề */}
-              <div className="space-y-3">
-                <label className="flex items-center gap-2 text-sm font-black text-black uppercase tracking-widest ml-1">
-                  <Tag size={16} /> Chủ đề xin hỏi
-                </label>
-                <select 
-                  value={topic} 
-                  onChange={(e) => setTopic(e.target.value)}
-                  className="w-full p-4 bg-gray-100 border-2 border-gray-200 rounded-2xl text-black font-bold focus:bg-white focus:border-amber-500 outline-none transition-all cursor-pointer"
-                >
-                  {TOPICS.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
+        {/* Form Gieo Quẻ */}
+        {!result && (
+          <div className="bg-zinc-900/50 p-8 md:p-10 rounded-[2.5rem] border border-zinc-800 shadow-2xl animate-in fade-in slide-in-from-bottom-4">
+            <form onSubmit={handleCastIChing} className="space-y-8">
               
-              {/* Ngày */}
-              <div className="space-y-3">
-                <label className="flex items-center gap-2 text-sm font-black text-black uppercase tracking-widest ml-1">
-                  <Calendar size={16} /> Ngày gieo quẻ
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Chủ đề */}
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-xs font-bold text-zinc-400 uppercase tracking-wider ml-1">
+                    <Tag size={16} className="text-zinc-600" /> Chủ đề xin hỏi
+                  </label>
+                  <select 
+                    value={topic} 
+                    onChange={(e) => setTopic(e.target.value)}
+                    className="w-full p-4 bg-zinc-950 border border-zinc-800 rounded-2xl text-white font-medium focus:border-indigo-500 outline-none transition-all cursor-pointer"
+                  >
+                    {TOPICS.map(t => <option key={t} value={t} className="bg-zinc-900">{t}</option>)}
+                  </select>
+                </div>
+                
+                {/* Ngày */}
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-xs font-bold text-zinc-400 uppercase tracking-wider ml-1">
+                    <Calendar size={16} className="text-zinc-600" /> Ngày gieo quẻ
+                  </label>
+                  <input 
+                    type="date" 
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="w-full p-4 bg-zinc-950 border border-zinc-800 rounded-2xl text-white font-medium focus:border-indigo-500 outline-none transition-all"
+                  />
+                </div>
+
+                {/* Giờ */}
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-xs font-bold text-zinc-400 uppercase tracking-wider ml-1">
+                    <Clock size={16} className="text-zinc-600" /> Giờ gieo quẻ
+                  </label>
+                  <input 
+                    type="time" 
+                    value={selectedTime}
+                    onChange={(e) => setSelectedTime(e.target.value)}
+                    className="w-full p-4 bg-zinc-950 border border-zinc-800 rounded-2xl text-white font-medium focus:border-indigo-500 outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Câu hỏi */}
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-xs font-bold text-zinc-400 uppercase tracking-wider ml-1">
+                  <MessageSquare size={16} className="text-zinc-600" /> Câu hỏi chi tiết
                 </label>
-                <input 
-                  type="date" 
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full p-4 bg-gray-100 border-2 border-gray-200 rounded-2xl text-black font-bold focus:bg-white focus:border-amber-500 outline-none transition-all"
+                <textarea
+                  rows={3}
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  placeholder="Hữu niệm tất ứng - Nhập câu hỏi của bạn tại đây..."
+                  className="w-full p-5 bg-zinc-950 border border-zinc-800 rounded-2xl text-white font-medium focus:border-indigo-500 outline-none transition-all placeholder:text-zinc-700"
                 />
               </div>
 
-              {/* Giờ */}
-              <div className="space-y-3">
-                <label className="flex items-center gap-2 text-sm font-black text-black uppercase tracking-widest ml-1">
-                  <Clock size={16} /> Giờ gieo quẻ
-                </label>
-                <input 
-                  type="time" 
-                  value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
-                  className="w-full p-4 bg-gray-100 border-2 border-gray-200 rounded-2xl text-black font-bold focus:bg-white focus:border-amber-500 outline-none transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Câu hỏi */}
-            <div className="space-y-3">
-              <label className="flex items-center gap-2 text-sm font-black text-black uppercase tracking-widest ml-1">
-                <MessageSquare size={16} /> Câu hỏi chi tiết
-              </label>
-              <textarea
-                rows={3}
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                placeholder="VD: Tuần tới tôi đi phỏng vấn công ty X có thuận lợi không?"
-                className="w-full p-5 bg-gray-100 border-2 border-gray-200 rounded-2xl text-black font-bold focus:bg-white focus:border-amber-500 outline-none transition-all placeholder:text-gray-400"
-              />
-            </div>
-
-            {error && (
-              <div className="bg-red-50 text-red-600 p-4 rounded-xl font-bold border border-red-200 animate-pulse">
-                ⚠️ {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full py-5 text-xl rounded-[1.5rem] text-white font-black transition-all shadow-xl flex items-center justify-center gap-3 active:scale-[0.98] ${
-                loading 
-                  ? 'bg-amber-300 cursor-not-allowed opacity-70' 
-                  : 'bg-amber-600 hover:bg-amber-500 shadow-amber-900/20'
-              }`}
-            >
-              {loading ? (
-                <><Sparkles className="animate-spin" /> ĐANG THỈNH THIÊN CƠ...</>
-              ) : (
-                'GIEO QUẺ NGAY'
+              {error && (
+                <div className="bg-red-950/30 text-red-500 p-4 rounded-xl font-bold border border-red-900/50">
+                  ⚠️ {error}
+                </div>
               )}
-            </button>
-          </form>
-        </div>
+
+              {/* Nút bấm chuyển sang màu Indigo */}
+              <button
+                type="submit"
+                disabled={loading}
+                className={`w-full py-5 text-xl rounded-[1.5rem] text-white font-black transition-all shadow-xl flex items-center justify-center gap-3 active:scale-[0.98] ${
+                    loading 
+                      ? 'bg-indigo-400 cursor-not-allowed opacity-70' 
+                      : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-900/20'
+                  }`}
+              >
+                {loading ? (
+                  <><Sparkles className="animate-spin" /> ĐANG THỈNH THIÊN CƠ...</>
+                ) : (
+                  'GIEO QUẺ NGAY'
+                )}
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* Kết Quả */}
         {result && (
-          <div className="animate-in fade-in zoom-in duration-500 pb-20">
+          <div className="animate-in fade-in zoom-in duration-700 pb-20">
             <IChingHexagram 
               hexagramData={result.hexagramData.data} 
               aiReading={result.aiReading} 
             />
             <button 
               onClick={() => setResult(null)}
-              className="mt-8 text-zinc-400 hover:text-white text-sm font-bold uppercase tracking-widest mx-auto block p-4 bg-zinc-900/50 rounded-2xl transition-all border border-zinc-800"
+              className="mt-12 text-zinc-500 hover:text-white text-xs font-bold uppercase tracking-widest mx-auto block p-4 bg-zinc-900 rounded-2xl transition-all border border-zinc-800"
             >
               ← Gieo quẻ khác
             </button>
