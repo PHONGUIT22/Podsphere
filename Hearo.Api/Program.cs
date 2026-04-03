@@ -156,6 +156,12 @@ builder.Services.AddHttpClient(); // Đăng ký Factory chung
 builder.Services.AddHttpClient("AstrologyClient", client => {
     client.BaseAddress = new Uri("http://localhost:3001/");
 });
+
+// THÊM DÒNG NÀY: Kết nối với Python CrewAI Service
+builder.Services.AddHttpClient("CrewAIClient", client => {
+    client.BaseAddress = new Uri("http://localhost:8001/"); // Python FastAPI
+    client.Timeout = TimeSpan.FromMinutes(3); // CrewAI chạy qua nhiều agent có thể mất 15-30 giây
+});
 // 4. CẤU HÌNH AUTHENTICATION (JWT)
 builder.Services.AddAuthentication(options =>
 {
