@@ -35,11 +35,15 @@ export default function TuViPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const parsedData = JSON.parse(res.data.data);
+          // Nếu nó là chuỗi (string) thì mới parse, còn nếu là object rồi thì dùng luôn
+      const parsedData = typeof res.data.data === "string" 
+          ? JSON.parse(res.data.data) 
+          : res.data.data;
+
       const finalResult = {
-        ...parsedData,
-        fullName: formData.fullName,
-        viewYear: formData.viewYear // Truyền năm xem qua View để hiển thị
+          ...parsedData,
+          fullName: formData.fullName,
+          viewYear: formData.viewYear 
       };
 
       localStorage.setItem("last_tuvi_result", JSON.stringify(finalResult));
