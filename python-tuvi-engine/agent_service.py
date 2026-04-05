@@ -7,9 +7,9 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from crewai import Agent, Task, Crew, Process, LLM
 from fastapi.middleware.cors import CORSMiddleware 
+os.environ["OPENAI_API_KEY"] = "NA"
 
 app = FastAPI()
-os.environ["OPENAI_API_KEY"] = "NA"
 
 # --- CHÈN ĐOẠN NÀY VÀO ĐỂ SỬA LỖI ---
 app.add_middleware(
@@ -165,9 +165,108 @@ Kết thúc bằng: 👉 'Mệnh do thiên định, nhưng đức do tâm sinh.'
 class TuViAnalysisRequest(BaseModel):
     tuvi_json: str
     persona: str = "traditional"
-
 @app.post("/api/tuvi-reading")
 async def generate_tuvi_reading(request: TuViAnalysisRequest):
+    try:
+        current_ai_url = get_latest_colab_url()
+        if not current_ai_url: return {"status": "error", "message": "AI Server Offline"}
+
+        remote_llm = LLM(
+            model="ollama/qwen2.5:7b",
+            base_url=current_ai_url,
+            api_key="ollama",
+            temperature=0.7 
+        )
+
+        data = json.loads(request.tuvi_json)
+        laso = data.get("laso", {})
+        thong_tin = laso.get("thong_tin", {})
+        cac_cung = laso.get("cac_cung", [])
+
+        # 1. HÀM CHIẾT XUẤT DỮ LIỆU CHI TIẾT HƠN
+        def get_cung_detail(ten_cung_target):
+            cung = next((c for c in cac_cung if c.get("ten_cung", "").lower() == ten_cung_target.lower()), None)
+            if not cung: return "Cung này trống hoặc không tìm thấy."
+            
+            chinh_tinh = []
+            for s in cung.get("chinh_tinh", []):
+                dt = s.get("dac_tinh", "")
+                status = "Sáng sủa (Miếu/Vượng/Đắc)" if any(x in dt for x in ["M", "V", "Đ"]) else "Tối tăm (Hãm địa)"
+                chinh_tinh.append(f"{s['ten_sao']} [{status}]")
+            
+            sao_tot = [s["ten_sao"] for s in cung.get("phu_tinh", []) if s["ten_sao"] in ["Hóa Lộc", "Hóa Quyền", "Hóa Khoa", "Thiên Khôi", "Thiên Việt", "Tả Phù", "Hữu Bật", "Văn Xương", "Văn Khúc"]]
+            sao_xau = [s["ten_sao"] for s in cung.get("phu_tinh", []) if s["ten_sao"] in ["Địa Không", "Địa Kiếp", "Kình Dương", "Đà La", "Hỏa Tinh", "Linh Tinh", "Hóa Kỵ", "Thiên Hình"]]
+            
+            an_ngu = []
+            if cung.get("tuan_trung"): an_ngu.append("Tuần")
+            if cung.get("triet_lo"): an_ngu.append("Triệt")
+
+            res = f"- Chính tinh: {', '.join(chinh_tinh) if chinh_tinh else 'Vô Chính Diệu'}\n"
+            if sao_tot: res += f"- Cát tinh hội tụ: {', '.join(sao_tot)}\n"
+            if sao_xau: res += f"- Sát tinh xâm phạm: {', '.join(sao_xau)}\n"
+            if an_ngu: res += f"- Bị {', '.join(an_ngu)} án ngữ.\n"
+            return res
+
+        thong_tin_morm = f"""
+CHỦ NHÂN: {thong_tin.get('am_duong')} | Mệnh: {thong_tin.get('ban_menh')} | Cục: {thong_tin.get('cuc')}
+1. CUNG MỆNH:
+{get_cung_detail('Mệnh')}
+2. CUNG QUAN LỘC:
+{get_cung_detail('Quan lộc')}
+3. CUNG TÀI BẠCH:
+{get_cung_detail('Tài Bạch')}
+4. CUNG THÂN (Hậu vận):
+{get_cung_detail('Thân') if any(c.get('cung_than') for c in cac_cung) else 'Chưa xác định'}
+"""
+
+        # 2. PROMPT "SIÊU CẤP" ÉP AI KHÔNG ĐƯỢC NGÁO
+        if request.persona == "genz":
+            instruction = "Dùng ngôn ngữ GenZ, mặn mòi, tấu hài nhưng phân tích sâu vào thực tế đời sống."
+        else:
+            instruction = "Dùng phong cách uyên bác, trang trọng, luận giải thâm trầm kiểu bậc thầy lý số."
+
+        prompt_content = f"""
+Bạn là một chuyên gia bậc thầy về Tử Vi Đẩu Số. Hãy luận giải lá số dựa trên dữ liệu thật dưới đây.
+
+🎯 KIẾN THỨC BẮT BUỘC (TUÂN THỦ TUYỆT ĐỐI):
+1. Thái Dương (Mặt trời), Thái Âm (Mặt trăng) là NHẬT - NGUYỆT, là QUÝ TINH, không bao giờ là tà tinh. 
+2. Tuần/Triệt án ngữ tại cung nào thì cung đó bị đảo ngược tính chất hoặc gây vất vả thời trẻ.
+3. Vô Chính Diệu (không có chính tinh) thì phải nhìn cung đối diện để luận.
+4. Không được viết sơ sài. Mỗi phần phải phân tích ít nhất 150 chữ.
+
+DỮ LIỆU LÁ SỐ:
+{thong_tin_morm}
+
+🎯 NHIỆM VỤ: Hãy viết bài luận chi tiết theo cấu trúc Markdown sau:
+
+# 📜 BẢN LUẬN GIẢI TỬ VI CHI TIẾT
+(Viết lời dẫn nhập về bản mệnh {thong_tin.get('ban_menh')})
+
+## 1. Bản Thể & Tính Cách (Cung Mệnh)
+- Phân tích kỹ các chính tinh và sát tinh tại Mệnh. Ảnh hưởng của Tuần/Triệt (nếu có). 
+- Đưa ra nhận xét về tư duy và hành động của đương số.
+
+## 2. Sự Nghiệp & Công Danh (Cung Quan Lộc)
+- Tư vấn định hướng nghề nghiệp. Đương số hợp làm chủ hay làm thuê? Những khó khăn cần vượt qua.
+
+## 3. Tiền Bạc & Tài Lộc (Cung Tài Bạch)
+- Cách thức kiếm tiền, giữ tiền. Những đại hạn về tài chính cần lưu ý.
+
+## 4. Hậu Vận & Lời Khuyên Cải Mệnh
+- Luận giải về cung Thân và đưa ra lời khuyên thực tế để cuộc sống tốt đẹp hơn.
+
+Yêu cầu phong cách: {instruction}
+"""
+
+        expert_advisor = Agent(role='Bậc Thầy Tử Vi', goal='Luận giải chuyên sâu', backstory='Bạn là cố vấn lý số hàng đầu.', llm=remote_llm)
+        unified_task = Task(description=prompt_content, agent=expert_advisor, expected_output="Bài luận Tử Vi chuyên sâu.")
+        crew = Crew(agents=[expert_advisor], tasks=[unified_task], process=Process.sequential)
+        
+        result = crew.kickoff()
+        return {"status": "success", "ai_reading": str(result)}
+
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
     try:
         # Lấy link AI mới nhất từ Firebase (Dùng lại hàm đã viết ở code trước)
         current_ai_url = get_latest_colab_url()

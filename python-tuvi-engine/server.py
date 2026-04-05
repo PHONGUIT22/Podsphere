@@ -5,9 +5,7 @@ from datetime import datetime
 
 app = FastAPI()
 
-# ==========================================================
 # HÀM TỰ AN ĐẦY ĐỦ 9 SAO LƯU QUAN TRỌNG (THEO CHUẨN)
-# ==========================================================
 def an_sao_luu(db, nam_xem):
     # Can: 0:Giáp, 1:Ất, 2:Bính, 3:Đinh, 4:Mậu, 5:Kỷ, 6:Canh, 7:Tân, 8:Nhâm, 9:Quý
     can_index = (nam_xem - 4) % 10
